@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Arduino IDE build output
+build/
+*.bin
+*.elf
+*.map
+
+# Compiled SquareLine Studio exports (optional — remove if you want to track them)
+# Uncomment the lines below if you regenerate these from SquareLine Studio:
+# ui_img_*.c
+
+# Editor
+.vscode/
+*.swp

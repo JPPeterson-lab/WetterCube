@@ -1,0 +1,18 @@
+SET(SOURCES ui_comp_imagewetter.c
+    ui_comp.c
+    ui_Screen1.c
+    ui_ScreenLager.c
+    ui_Screen2.c
+    ui.c
+    ui_comp_hook.c
+    ui_helpers.c
+    ui_img_day_clear_png.c
+    ui_img_1328666373.c
+    ui_img_279934287.c
+    ui_img_rain_png.c
+    ui_img_thunder_png.c
+    ui_img_fog_png.c
+    ui_img_overcast_png.c
+    ui_img_snow_png.c)
+
+add_library(ui ${SOURCES})
