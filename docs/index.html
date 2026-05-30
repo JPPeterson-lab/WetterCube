@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WetterCube – Installer</title>
+  <script
+    type="module"
+    src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
+  ></script>
+  <style>
+    :root {
+      --accent: #00adb5;
+      --bg:     #0f0f0f;
+      --card:   #1a1a1a;
+      --text:   #e0e0e0;
+      --muted:  #888;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    header p {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      background: var(--accent);
+      color: #000;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.9rem;
+    }
+
+    .step-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .step-text b { color: #fff; }
+    .step-text code {
+      background: #2a2a2a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      color: var(--accent);
+    }
+
+    .install-wrap {
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    esp-web-install-button {
+      --esp-tools-button-color: var(--accent);
+      --esp-tools-button-text-color: #000;
+    }
+
+    .browser-hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    .browser-hint a { color: var(--accent); }
+
+    footer {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>&#9729; WetterCube</h1>
+    <p>ESP32-C3 Wetterstation &ndash; Web-Installer</p>
+  </header>
+
+  <!-- SCHRITT-ANLEITUNG -->
+  <div class="card">
+    <h2>&#128295; So wird's gemacht</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Öffne diese Seite in <b>Google Chrome</b> oder <b>Microsoft Edge</b>
+        (andere Browser unterstützen kein USB-Flashen).
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Verbinde deinen <b>WetterCube per USB</b> mit dem Computer.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Klicke auf <b>„Installieren"</b> und wähle den richtigen
+        <b>COM-Port</b> aus (meist der einzige in der Liste).
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Nach dem Flashen öffnet sich auf deinem Handy oder PC das WLAN
+        <code>WetterCube-Setup</code>. Verbinde dich damit und öffne
+        <code>192.168.4.1</code> im Browser.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text">
+        Trage deinen <b>WLAN-Namen</b>, dein <b>Passwort</b> und deinen
+        <b>Wohnort</b> ein. Der Cube verbindet sich und zeigt sofort
+        das aktuelle Wetter an.
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTALL-BUTTON -->
+  <div class="card">
+    <h2>&#9889; Firmware flashen</h2>
+    <div class="install-wrap">
+      <esp-web-install-button manifest="manifest.json">
+        <button slot="activate" style="
+          background: var(--accent);
+          color: #000;
+          font-size: 1.1rem;
+          font-weight: bold;
+          border: none;
+          padding: 14px 36px;
+          border-radius: 8px;
+          cursor: pointer;
+          letter-spacing: 1px;
+        ">
+          &#9889; Installieren
+        </button>
+        <span slot="unsupported">
+          &#10060; Dein Browser unterstützt kein Web-Flashen.
+          Bitte nutze Chrome oder Edge.
+        </span>
+      </esp-web-install-button>
+      <p class="browser-hint">
+        Funktioniert nur in Chrome / Edge &ndash;
+        <a href="https://www.google.com/chrome/" target="_blank">Chrome herunterladen</a>
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/JPPeterson-lab/wettercube" target="_blank">
+      GitHub &rarr; JPPeterson-lab/wettercube
+    </a>
+    &nbsp;&middot;&nbsp;
+    Wetterdaten: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a>
+  </footer>
+
+</body>
+</html>
