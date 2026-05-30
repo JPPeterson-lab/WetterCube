@@ -5,9 +5,11 @@
 
 # Arduino IDE build output
 build/
-*.bin
 *.elf
 *.map
+# .bin-Dateien ignorieren, AUSSER die im docs/firmware/ Ordner
+*.bin
+!docs/firmware/*.bin
 
 # Compiled SquareLine Studio exports (optional — remove if you want to track them)
 # Uncomment the lines below if you regenerate these from SquareLine Studio:
