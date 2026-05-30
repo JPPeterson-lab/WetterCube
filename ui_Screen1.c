@@ -29,7 +29,7 @@ lv_obj_set_x( ui_LabelUhr, 0 );
 lv_obj_set_y( ui_LabelUhr, -73 );
 lv_obj_set_align( ui_LabelUhr, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelUhr,"15:05");
-lv_obj_set_style_text_color(ui_LabelUhr, lv_color_hex(0xFEFEFE), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_color(ui_LabelUhr, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelUhr, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_letter_space(ui_LabelUhr, 4, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_line_space(ui_LabelUhr, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -42,7 +42,7 @@ lv_obj_set_x( ui_LabelTemp, -7 );
 lv_obj_set_y( ui_LabelTemp, 68 );
 lv_obj_set_align( ui_LabelTemp, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelTemp,"22° C");
-lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelTemp, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelTemp, &lv_font_montserrat_28, LV_PART_MAIN| LV_STATE_DEFAULT);
 
@@ -63,7 +63,7 @@ lv_obj_set_x( ui_LabelHum, 79 );
 lv_obj_set_y( ui_LabelHum, 68 );
 lv_obj_set_align( ui_LabelHum, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelHum,"58 %");
-lv_obj_set_style_text_color(ui_LabelHum, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_color(ui_LabelHum, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelHum, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelHum, &lv_font_montserrat_28, LV_PART_MAIN| LV_STATE_DEFAULT);
 
@@ -74,7 +74,7 @@ lv_obj_set_x( ui_uiLabelDatum, -1 );
 lv_obj_set_y( ui_uiLabelDatum, -14 );
 lv_obj_set_align( ui_uiLabelDatum, LV_ALIGN_CENTER );
 lv_label_set_text(ui_uiLabelDatum,"Mi. 20.05.2026");
-lv_obj_set_style_text_color(ui_uiLabelDatum, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_color(ui_uiLabelDatum, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_uiLabelDatum, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_uiLabelDatum, &lv_font_montserrat_28, LV_PART_MAIN| LV_STATE_DEFAULT);
 
