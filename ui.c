@@ -36,6 +36,7 @@ lv_disp_set_theme(dispp, theme);
 ui_Screen1_screen_init();
 ui_ScreenLager_screen_init();
 ui_Screen2_screen_init();
+ui_Screen3_screen_init();
 ui____initial_actions0 = lv_obj_create(NULL);
 lv_disp_load_scr( ui_Screen1);
 }
@@ -44,4 +45,5 @@ void ui_destroy( void )
 {ui_Screen1_screen_destroy();
 ui_ScreenLager_screen_destroy();
 ui_Screen2_screen_destroy();
+ui_Screen3_screen_destroy();
 }
