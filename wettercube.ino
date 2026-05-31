@@ -27,9 +27,6 @@ bool setupMode = false;
 #define TOUCH_PIN 3
 int currentScreen = 1;
 unsigned long lastTouchTime = 0;
-unsigned long touchPressStart = 0;
-bool touchHeld = false;
-#define LONG_PRESS_MS 3000
 
 // --- DISPLAY HARDWARE PINS ---
 #define TFT_MOSI 20
@@ -64,7 +61,6 @@ void startSetupPortal();
 void drawSetupScreen();
 void handleRoot();
 void handleSave();
-void resetToSetup();
 
 void setup() {
     Serial.begin(115200);
@@ -159,44 +155,21 @@ void loop() {
 // --- BUTTON ---
 
 void checkTouchButton() {
-    bool pressed = (digitalRead(TOUCH_PIN) == HIGH);
-
-    if (pressed) {
-        if (!touchHeld) {
-            touchHeld = true;
-            touchPressStart = millis();
-        } else if (millis() - touchPressStart >= LONG_PRESS_MS) {
-            // Langer Druck → Setup-Portal öffnen
-            touchHeld = false;
-            resetToSetup();
-        }
-    } else {
-        if (touchHeld) {
-            // Kurzer Druck → Screen wechseln (nur beim Loslassen, mind. 200 ms Entprellung)
-            if (millis() - touchPressStart < LONG_PRESS_MS &&
-                millis() - lastTouchTime > 500) {
-                lastTouchTime = millis();
-                if (currentScreen == 1) {
-                    lv_scr_load_anim(ui_Screen2, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
-                    currentScreen = 2;
-                } else if (currentScreen == 2) {
-                    lv_scr_load_anim(ui_Screen3, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
-                    currentScreen = 3;
-                } else {
-                    lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
-                    currentScreen = 1;
-                }
+    if (digitalRead(TOUCH_PIN) == HIGH) {
+        if (millis() - lastTouchTime > 500) {
+            lastTouchTime = millis();
+            if (currentScreen == 1) {
+                lv_scr_load_anim(ui_Screen2, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
+                currentScreen = 2;
+            } else if (currentScreen == 2) {
+                lv_scr_load_anim(ui_Screen3, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
+                currentScreen = 3;
+            } else {
+                lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
+                currentScreen = 1;
             }
-            touchHeld = false;
         }
     }
-}
-
-void resetToSetup() {
-    preferences.putString("ssid", "");
-    preferences.putString("location", "");
-    preferences.end();
-    ESP.restart();
 }
 
 // --- SETUP PORTAL ---
