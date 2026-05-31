@@ -19,7 +19,6 @@ kein API-Key nötig.
 - **Screen 2:** Wind, Luftdruck, gefühlte Temperatur
 - **Screen 3:** UV-Index (Max), Sonnenaufgang & Sonnenuntergang
 - **Captive-Portal-Setup:** WLAN + Standort bequem per Browser einstellen
-- **Langer Tastendruck (3 s):** Reset ins Setup-Portal ohne USB-Kabel
 
 ---
 
@@ -30,7 +29,7 @@ Entwicklungsumgebung:
 
 **👉 [WetterCube Web-Installer öffnen](https://jppeterson-lab.github.io/wettercube/)**
 
-> Funktioniert nur in **Google Chrome** oder **Microsoft Edge** (WebSerial API).
+> Funktioniert nur in **Google Chrome** oder **Microsoft Edge** (WebSerial API). Der Anleitung folgen dei auf dem Monitor erscheint. Das flashen ist nur einmalig nötig. Bei Updates kann der Vorgang wiederholt werden...sowie wenn sich das WLAN Netz bzw. der Zugang ändert oder der Ort von welchem das Wetter angezeigt werden soll.
 
 ### Einrichtung nach dem Flashen
 
