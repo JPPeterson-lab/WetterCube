@@ -2,8 +2,7 @@
 
 Eine kompakte WLAN-Wetterstation auf Basis des **ESP32-C3**, die aktuelle
 Wetterdaten auf einem 1,54"-Farbdisplay (ST7789, 240×240 px) anzeigt.
-Dies ist mein erstes eigenes Hardware-Projekt – von der Schaltung bis zur
-Firmware selbst gebaut und programmiert.
+Dies ist mein erstes eigenes Hardware-Projekt von Grund auf selbst gebaut und mit KI Hilfe programmiert.
 
 Die Wetterdaten kommen kostenlos von [Open-Meteo](https://open-meteo.com) –
 kein API-Key nötig.
