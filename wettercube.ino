@@ -179,6 +179,9 @@ void checkTouchButton() {
                 if (currentScreen == 1) {
                     lv_scr_load_anim(ui_Screen2, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
                     currentScreen = 2;
+                } else if (currentScreen == 2) {
+                    lv_scr_load_anim(ui_Screen3, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
+                    currentScreen = 3;
                 } else {
                     lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
                     currentScreen = 1;
@@ -305,7 +308,8 @@ void fetchWeather() {
     url += "?latitude="  + String(latitude, 4);
     url += "&longitude=" + String(longitude, 4);
     url += "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,surface_pressure,weather_code";
-    url += "&wind_speed_unit=kmh";
+    url += "&daily=uv_index_max,sunrise,sunset";
+    url += "&wind_speed_unit=kmh&timezone=auto&forecast_days=1";
 
     Serial.print("Wetter-URL: "); Serial.println(url);
     http.begin(url);
@@ -313,7 +317,7 @@ void fetchWeather() {
 
     if (httpCode == 200) {
         String payload = http.getString();
-        DynamicJsonDocument doc(1024);
+        DynamicJsonDocument doc(2048);
         deserializeJson(doc, payload);
 
         JsonObject current = doc["current"];
@@ -335,6 +339,17 @@ void fetchWeather() {
 
         int wmoCode = current["weather_code"].as<int>();
         updateWeatherIcon(wmoCode);
+
+        // --- Screen 3: UV-Index, Sonnenaufgang, Sonnenuntergang ---
+        float uvMax = doc["daily"]["uv_index_max"][0].as<float>();
+        lv_label_set_text(uic_LabelUV, String((int)round(uvMax)).c_str());
+
+        String sunriseRaw  = doc["daily"]["sunrise"][0].as<String>();
+        String sunsetRaw   = doc["daily"]["sunset"][0].as<String>();
+        String sunriseTime = (sunriseRaw.length()  >= 16) ? sunriseRaw.substring(11, 16)  : "--:--";
+        String sunsetTime  = (sunsetRaw.length()   >= 16) ? sunsetRaw.substring(11, 16)   : "--:--";
+        lv_label_set_text(uic_LabelAufgang,   sunriseTime.c_str());
+        lv_label_set_text(uic_LabelUntergang, sunsetTime.c_str());
 
         lastWeatherUpdate = millis();
         Serial.printf("Wetter OK: %.1f°C, %d%%, WMO %d, UV %.1f\n", temp, humidity, wmoCode, uvMax);
