@@ -17,9 +17,10 @@ lv_obj_t *ui____initial_actions0;
 #if LV_COLOR_DEPTH != 16
     #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
 #endif
-#if LV_COLOR_16_SWAP !=0
-    #error "LV_COLOR_16_SWAP should be 0 to match SquareLine Studio's settings"
-#endif
+// LV_COLOR_16_SWAP=1 wird für ST7789 über SPI benötigt – Check deaktiviert
+// #if LV_COLOR_16_SWAP !=0
+//     #error "LV_COLOR_16_SWAP should be 0 to match SquareLine Studio's settings"
+// #endif
 
 ///////////////////// ANIMATIONS ////////////////////
 
