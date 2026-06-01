@@ -28,6 +28,16 @@ bool setupMode = false;
 int currentScreen = 1;
 unsigned long lastTouchTime = 0;
 
+// --- DISPLAY DIMMEN ---
+#define BL_CHANNEL     0
+#define BL_FREQ        5000
+#define BL_RESOLUTION  8          // 8-bit → 0-255
+#define BL_BRIGHT      255        // 100%
+#define BL_DIM         51         // 20%
+#define DIM_TIMEOUT    180000UL   // 3 Minuten in ms
+bool isDimmed = false;
+unsigned long lastActivityTime = 0;
+
 // --- DISPLAY HARDWARE PINS ---
 #define TFT_MOSI 20
 #define TFT_SCLK 21
@@ -55,6 +65,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 void checkTouchButton();
 void updateClock();
 void fetchWeather();
+String getWindDirection(int deg);
 bool geocodeLocation(const String& city);
 void updateWeatherIcon(int wmoCode);
 void startSetupPortal();
@@ -68,8 +79,9 @@ void setup() {
     Serial.println("--- CUBE START ---");
 
     pinMode(TOUCH_PIN, INPUT);
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH);
+    ledcAttach(TFT_BL, BL_FREQ, BL_RESOLUTION);
+    ledcWrite(TFT_BL, BL_BRIGHT);
+    lastActivityTime = millis();
 
     gfx->begin();
     gfx->fillScreen(0x0000);
@@ -140,6 +152,12 @@ void loop() {
 
     checkTouchButton();
 
+    // --- Display dimmen nach Inaktivität ---
+    if (!isDimmed && millis() - lastActivityTime >= DIM_TIMEOUT) {
+        ledcWrite(TFT_BL, BL_DIM);
+        isDimmed = true;
+    }
+
     static unsigned long lastTimeUpdate = 0;
     if (millis() - lastTimeUpdate >= 1000) {
         lastTimeUpdate = millis();
@@ -156,6 +174,13 @@ void loop() {
 
 void checkTouchButton() {
     if (digitalRead(TOUCH_PIN) == HIGH) {
+        lastActivityTime = millis();
+        if (isDimmed) {
+            // Aufwecken – nur Display heller, kein Screen-Wechsel
+            ledcWrite(TFT_BL, BL_BRIGHT);
+            isDimmed = false;
+            return;
+        }
         if (millis() - lastTouchTime > 500) {
             lastTouchTime = millis();
             if (currentScreen == 1) {
@@ -266,6 +291,24 @@ bool geocodeLocation(const String& city) {
     return false;
 }
 
+// --- WINDRICHTUNG (Grad → Pfeil + Himmelsrichtung) ---
+
+String getWindDirection(int deg) {
+    // 8 Sektoren à 45°, versetzt um 22.5° damit N zentriert ist
+    const char* richtungen[] = {
+        "N",   // 0°
+        "NO",  // 45°
+        "O",   // 90°
+        "SO",  // 135°
+        "S",   // 180°
+        "SW",  // 225°
+        "W",   // 270°
+        "NW"   // 315°
+    };
+    int index = (int)((deg + 22.5) / 45.0) % 8;
+    return String(richtungen[index]);
+}
+
 // --- WETTER ABRUFEN (Open-Meteo, kein API-Key) ---
 
 void fetchWeather() {
@@ -280,7 +323,7 @@ void fetchWeather() {
     String url = "https://api.open-meteo.com/v1/forecast";
     url += "?latitude="  + String(latitude, 4);
     url += "&longitude=" + String(longitude, 4);
-    url += "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,surface_pressure,weather_code";
+    url += "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code";
     url += "&daily=uv_index_max,sunrise,sunset";
     url += "&wind_speed_unit=kmh&timezone=auto&forecast_days=1";
 
@@ -298,6 +341,17 @@ void fetchWeather() {
         float temp = current["temperature_2m"].as<float>();
         lv_label_set_text(ui_LabelTemp, (String((int)round(temp)) + "°C").c_str());
 
+        // Farbe je nach Temperatur
+        if (temp >= 24.0) {
+            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0xFF3300), LV_PART_MAIN | LV_STATE_DEFAULT); // Rot
+        } else if (temp >= 15.0) {
+            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0xFFCC00), LV_PART_MAIN | LV_STATE_DEFAULT); // Gelb
+        } else if (temp >= 8.0) {
+            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0x00CC44), LV_PART_MAIN | LV_STATE_DEFAULT); // Grün
+        } else {
+            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0x00AAFF), LV_PART_MAIN | LV_STATE_DEFAULT); // Blau
+        }
+
         int humidity = current["relative_humidity_2m"].as<int>();
         lv_label_set_text(ui_LabelHum, (String(humidity) + "%").c_str());
 
@@ -306,6 +360,9 @@ void fetchWeather() {
 
         float wind = current["wind_speed_10m"].as<float>();  // bereits in km/h
         lv_label_set_text(ui_LabelWind, (String((int)round(wind)) + " km/h").c_str());
+
+        int windDeg = current["wind_direction_10m"].as<int>();
+        lv_label_set_text(uic_LabelWindDir, getWindDirection(windDeg).c_str());
 
         int pressure = current["surface_pressure"].as<int>();
         lv_label_set_text(ui_LabelPress, (String(pressure) + " hPa").c_str());

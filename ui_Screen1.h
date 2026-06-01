@@ -17,16 +17,16 @@ extern lv_obj_t *ui_Screen1;
 extern lv_obj_t *ui_LabelUhr;
 extern lv_obj_t *ui_LabelTemp;
 extern lv_obj_t *ui_ImageWetter;
-extern lv_obj_t *ui_LabelHum;
 extern lv_obj_t *ui_uiLabelDatum;
-extern lv_obj_t *ui_Image1;
-extern lv_obj_t *ui_Image2;
+extern lv_obj_t *ui_LabelWind;
+extern lv_obj_t *ui_LabelWindDir;
 // CUSTOM VARIABLES
 extern lv_obj_t *uic_LabelUhr;
 extern lv_obj_t *uic_LabelTemp;
 extern lv_obj_t *uic_ImageWetter;
-extern lv_obj_t *uic_LabelHum;
 extern lv_obj_t *uic_uiLabelDatum;
+extern lv_obj_t *uic_LabelWind;
+extern lv_obj_t *uic_LabelWindDir;
 
 #ifdef __cplusplus
 } /*extern "C"*/

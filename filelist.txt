@@ -8,8 +8,6 @@ ui.c
 ui_comp_hook.c
 ui_helpers.c
 ui_img_day_clear_png.c
-ui_img_1328666373.c
-ui_img_279934287.c
 ui_img_rain_png.c
 ui_img_thunder_png.c
 ui_img_fog_png.c

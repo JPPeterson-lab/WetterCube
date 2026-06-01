@@ -40,8 +40,6 @@ extern lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE( ui_img_day_clear_png);   // assets/day_clear.png
-LV_IMG_DECLARE( ui_img_1328666373);   // assets/icons8-thermometer-48.png
-LV_IMG_DECLARE( ui_img_279934287);   // assets/icons8-luftdruck-48.png
 LV_IMG_DECLARE( ui_img_rain_png);   // assets/rain.png
 LV_IMG_DECLARE( ui_img_thunder_png);   // assets/thunder.png
 LV_IMG_DECLARE( ui_img_fog_png);   // assets/fog.png

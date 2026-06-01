@@ -32,18 +32,18 @@ lv_obj_set_align( ui_LabelAufgang, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelAufgang,"12:00");
 lv_obj_set_style_text_color(ui_LabelAufgang, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelAufgang, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelAufgang, &lv_font_montserrat_18, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelAufgang, &lv_font_montserrat_22, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelUntergang = lv_label_create(ui_Screen3);
 lv_obj_set_width( ui_LabelUntergang, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_LabelUntergang, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_LabelUntergang, 0 );
-lv_obj_set_y( ui_LabelUntergang, 18 );
+lv_obj_set_y( ui_LabelUntergang, 15 );
 lv_obj_set_align( ui_LabelUntergang, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelUntergang,"13:00");
 lv_obj_set_style_text_color(ui_LabelUntergang, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelUntergang, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelUntergang, &lv_font_montserrat_18, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelUntergang, &lv_font_montserrat_22, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelUV = lv_label_create(ui_Screen3);
 lv_obj_set_width( ui_LabelUV, LV_SIZE_CONTENT);  /// 1
@@ -55,7 +55,7 @@ lv_label_set_text(ui_LabelUV,"6");
 lv_obj_set_style_text_color(ui_LabelUV, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelUV, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_align(ui_LabelUV, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelUV, &lv_font_montserrat_18, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelUV, &lv_font_montserrat_22, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_TextSonnenaufgang = lv_textarea_create(ui_Screen3);
 lv_obj_set_width( ui_TextSonnenaufgang, 240);

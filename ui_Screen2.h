@@ -14,18 +14,18 @@ extern "C" {
 extern void ui_Screen2_screen_init(void);
 extern void ui_Screen2_screen_destroy(void);
 extern lv_obj_t *ui_Screen2;
-extern lv_obj_t *ui_LabelWind;
 extern lv_obj_t *ui_LabelPress;
 extern lv_obj_t *ui_LabelFeelsLike;
 extern lv_obj_t *ui_TextArea3;
 extern lv_obj_t *ui_TextArea4;
 extern lv_obj_t *ui_TextArea5;
+extern lv_obj_t *ui_LabelHum;
 // CUSTOM VARIABLES
 extern lv_obj_t *uic_Screen2;
-extern lv_obj_t *uic_LabelWind;
 extern lv_obj_t *uic_LabelPress;
 extern lv_obj_t *uic_LabelFeelsLike;
 extern lv_obj_t *uic_TextArea3;
+extern lv_obj_t *uic_LabelHum;
 
 #ifdef __cplusplus
 } /*extern "C"*/

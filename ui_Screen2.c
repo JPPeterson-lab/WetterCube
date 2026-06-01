@@ -5,12 +5,12 @@
 
 #include "ui.h"
 
+lv_obj_t *uic_LabelHum;
 lv_obj_t *uic_TextArea3;
 lv_obj_t *uic_LabelFeelsLike;
 lv_obj_t *uic_LabelPress;
-lv_obj_t *uic_LabelWind;
 lv_obj_t *uic_Screen2;
-lv_obj_t *ui_Screen2 = NULL;lv_obj_t *ui_LabelWind = NULL;lv_obj_t *ui_LabelPress = NULL;lv_obj_t *ui_LabelFeelsLike = NULL;lv_obj_t *ui_TextArea3 = NULL;lv_obj_t *ui_TextArea4 = NULL;lv_obj_t *ui_TextArea5 = NULL;
+lv_obj_t *ui_Screen2 = NULL;lv_obj_t *ui_LabelPress = NULL;lv_obj_t *ui_LabelFeelsLike = NULL;lv_obj_t *ui_TextArea3 = NULL;lv_obj_t *ui_TextArea4 = NULL;lv_obj_t *ui_TextArea5 = NULL;lv_obj_t *ui_LabelHum = NULL;
 // event funtions
 
 // build funtions
@@ -22,25 +22,13 @@ lv_obj_clear_flag( ui_Screen2, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_obj_set_style_bg_color(ui_Screen2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_Screen2, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_LabelWind = lv_label_create(ui_Screen2);
-lv_obj_set_width( ui_LabelWind, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWind, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWind, 90 );
-lv_obj_set_y( ui_LabelWind, -95 );
-lv_obj_set_align( ui_LabelWind, LV_ALIGN_BOTTOM_LEFT );
-lv_label_set_text(ui_LabelWind,"Wind");
-lv_obj_set_style_text_color(ui_LabelWind, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWind, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_align(ui_LabelWind, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWind, &lv_font_montserrat_22, LV_PART_MAIN| LV_STATE_DEFAULT);
-
 ui_LabelPress = lv_label_create(ui_Screen2);
 lv_obj_set_width( ui_LabelPress, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_LabelPress, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_LabelPress, 0 );
-lv_obj_set_y( ui_LabelPress, -57 );
+lv_obj_set_y( ui_LabelPress, -69 );
 lv_obj_set_align( ui_LabelPress, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelPress,"Luftdruck");
+lv_label_set_text(ui_LabelPress,"1022 hPa");
 lv_obj_set_style_text_color(ui_LabelPress, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelPress, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_align(ui_LabelPress, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -50,7 +38,7 @@ ui_LabelFeelsLike = lv_label_create(ui_Screen2);
 lv_obj_set_width( ui_LabelFeelsLike, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_LabelFeelsLike, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_LabelFeelsLike, 0 );
-lv_obj_set_y( ui_LabelFeelsLike, 87 );
+lv_obj_set_y( ui_LabelFeelsLike, 89 );
 lv_obj_set_align( ui_LabelFeelsLike, LV_ALIGN_CENTER );
 lv_obj_set_style_text_color(ui_LabelFeelsLike, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelFeelsLike, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -63,7 +51,7 @@ ui_TextArea3 = lv_textarea_create(ui_Screen2);
 lv_obj_set_width( ui_TextArea3, 239);
 lv_obj_set_height( ui_TextArea3, 31);
 lv_obj_set_x( ui_TextArea3, 0 );
-lv_obj_set_y( ui_TextArea3, -92 );
+lv_obj_set_y( ui_TextArea3, -106 );
 lv_obj_set_align( ui_TextArea3, LV_ALIGN_CENTER );
 lv_textarea_set_text(ui_TextArea3,"Luftdruck");
 lv_textarea_set_placeholder_text(ui_TextArea3,"Placeholder...");
@@ -82,9 +70,9 @@ ui_TextArea4 = lv_textarea_create(ui_Screen2);
 lv_obj_set_width( ui_TextArea4, 239);
 lv_obj_set_height( ui_TextArea4, 36);
 lv_obj_set_x( ui_TextArea4, 0 );
-lv_obj_set_y( ui_TextArea4, -18 );
+lv_obj_set_y( ui_TextArea4, -29 );
 lv_obj_set_align( ui_TextArea4, LV_ALIGN_CENTER );
-lv_textarea_set_text(ui_TextArea4,"Wind Kmh");
+lv_textarea_set_text(ui_TextArea4,"Luftfeuchte");
 lv_textarea_set_placeholder_text(ui_TextArea4,"Placeholder...");
 lv_obj_clear_flag( ui_TextArea4, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
 lv_obj_set_scrollbar_mode(ui_TextArea4, LV_SCROLLBAR_MODE_OFF);
@@ -101,7 +89,7 @@ ui_TextArea5 = lv_textarea_create(ui_Screen2);
 lv_obj_set_width( ui_TextArea5, 239);
 lv_obj_set_height( ui_TextArea5, 35);
 lv_obj_set_x( ui_TextArea5, 0 );
-lv_obj_set_y( ui_TextArea5, 49 );
+lv_obj_set_y( ui_TextArea5, 52 );
 lv_obj_set_align( ui_TextArea5, LV_ALIGN_CENTER );
 lv_textarea_set_text(ui_TextArea5,"Feels like");
 lv_textarea_set_placeholder_text(ui_TextArea5,"Placeholder...");
@@ -116,11 +104,22 @@ lv_obj_set_style_bg_opa(ui_TextArea5, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_border_color(ui_TextArea5, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_border_opa(ui_TextArea5, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+ui_LabelHum = lv_label_create(ui_Screen2);
+lv_obj_set_width( ui_LabelHum, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_LabelHum, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_x( ui_LabelHum, 0 );
+lv_obj_set_y( ui_LabelHum, 9 );
+lv_obj_set_align( ui_LabelHum, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelHum,"58 %");
+lv_obj_set_style_text_color(ui_LabelHum, lv_color_hex(0xECE0E0), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelHum, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelHum, &lv_font_montserrat_22, LV_PART_MAIN| LV_STATE_DEFAULT);
+
 uic_Screen2 = ui_Screen2;
-uic_LabelWind = ui_LabelWind;
 uic_LabelPress = ui_LabelPress;
 uic_LabelFeelsLike = ui_LabelFeelsLike;
 uic_TextArea3 = ui_TextArea3;
+uic_LabelHum = ui_LabelHum;
 
 }
 
@@ -131,8 +130,6 @@ void ui_Screen2_screen_destroy(void)
 // NULL screen variables
 uic_Screen2= NULL;
 ui_Screen2= NULL;
-uic_LabelWind= NULL;
-ui_LabelWind= NULL;
 uic_LabelPress= NULL;
 ui_LabelPress= NULL;
 uic_LabelFeelsLike= NULL;
@@ -141,5 +138,7 @@ uic_TextArea3= NULL;
 ui_TextArea3= NULL;
 ui_TextArea4= NULL;
 ui_TextArea5= NULL;
+uic_LabelHum= NULL;
+ui_LabelHum= NULL;
 
 }
