@@ -1,6 +1,6 @@
 # ☁️ WetterCube
 
-Eine kompakte WLAN-Wetterstation auf Basis des **ESP32-C3**, die aktuelle
+Eine kompakte WLAN-Wetterstation auf Basis des **ESP32-C3 Super Mini**, die aktuelle
 Wetterdaten auf einem 1,54"-Farbdisplay (ST7789, 240×240 px) anzeigt.
 Dies ist mein erstes eigenes Hardware-Projekt von Grund auf selbst gebaut und mit KI Hilfe programmiert.
 
@@ -16,9 +16,12 @@ kein API-Key nötig.
 - **Windgeschwindigkeit** (km/h)
 - **Wetter-Icons** nach WMO-Code (klar, bewölkt, Regen, Schnee, Gewitter, Nebel)
 - **Uhrzeit & Datum** per NTP (Zeitzone Europa/Berlin)
-- **Screen 2:** Wind, Luftdruck, gefühlte Temperatur
-- **Screen 3:** UV-Index (Max), Sonnenaufgang & Sonnenuntergang
+- **Screen 2:** 3 Stunden Wetter Forecast
+- **Screen 3:** Wind, Luftdruck, gefühlte Temperatur
+- **Screen 4:** UV-Index (Max), Sonnenaufgang & Sonnenuntergang
 - **Captive-Portal-Setup:** WLAN + Standort bequem per Browser einstellen
+- **Regen-Warnung** Roter Screen blinkt 60 Min bevor der angesagte Regen eintreten soll, wird durch Touch berührung quittiert
+- **Automatisches Dimmern** Nach 3 Min automatisches Dimmen bis die Touch Funktion genutzt wird
 
 ---
 
