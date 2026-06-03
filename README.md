@@ -70,7 +70,21 @@ Entwicklungsumgebung:
 
 ---
 
+## 🙏 Credits
+
+| Ressource | Urheber | Lizenz |
+|---|---|---|
+| Wetter-Icons | [Dovora Weather Icons](https://www.dovora.com/resources/weather-icons/) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| Wetterdaten | [Open-Meteo](https://open-meteo.com) | Open-Meteo API (kostenlos) |
+
+Weitere Details in [CREDITS.md](CREDITS.md).
+
+---
+
 ## 📄 Lizenz
 
-Dieses Projekt steht unter der **MIT-Lizenz** – frei nutzbar, veränderbar und
-weitergabefähig. Weitere Details in [LICENSE](LICENSE).
+Der Quellcode dieses Projekts steht unter der **MIT-Lizenz** – frei nutzbar,
+veränderbar und weitergabefähig. Weitere Details in [LICENSE](LICENSE).
+
+Die enthaltenen Wetter-Icons unterliegen der **CC BY-SA 4.0**-Lizenz
+(siehe [CREDITS.md](CREDITS.md)).
