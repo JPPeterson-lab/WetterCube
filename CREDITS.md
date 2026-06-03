@@ -42,3 +42,4 @@ Der eigentliche Quellcode (`.ino`, `.c`, `.h` Dateien) dieses Projekts steht
 unter der **MIT-Lizenz** – siehe [LICENSE](LICENSE).
 
 Die oben genannten Drittanbieter-Ressourcen unterliegen ihren jeweiligen Lizenzen.
+Der eigentliche Quellcode (.ino, .c, .h Dateien) dieses Projekts steht unter der MIT-Lizenz. Die Verwendung der Icons in diesem Projekt macht den Quellcode nicht zu einem abgeleiteten Werk der Icons; die MIT-Lizenz bleibt für den Code hiervon unberührt.
