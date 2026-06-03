@@ -382,7 +382,7 @@ void fetchWeather() {
     url += "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code";
     url += "&daily=uv_index_max,sunrise,sunset";
     url += "&hourly=temperature_2m,weather_code";
-    url += "&wind_speed_unit=kmh&timezone=auto&forecast_days=1";
+    url += "&wind_speed_unit=kmh&timezone=auto&forecast_days=2";
 
     Serial.print("Wetter-URL: "); Serial.println(url);
     http.begin(url);
@@ -390,7 +390,7 @@ void fetchWeather() {
 
     if (httpCode == 200) {
         String payload = http.getString();
-        DynamicJsonDocument doc(6144);
+        DynamicJsonDocument doc(8192);
         deserializeJson(doc, payload);
 
         JsonObject current = doc["current"];
@@ -439,12 +439,13 @@ void fetchWeather() {
             lv_obj_t* icons[3]      = { uic_ImageH1,     uic_ImageH2,     uic_ImageH3     };
 
             for (int i = 0; i < 3; i++) {
-                int idx = min(h + 1 + i, 23);
-                char zeitBuf[6];
-                sprintf(zeitBuf, "%02d:00", idx);
+                int idx = h + 1 + i; // max 23+3=26, liegt sicher in 48h-Array
                 float hTemp = doc["hourly"]["temperature_2m"][idx].as<float>();
                 int   hCode = doc["hourly"]["weather_code"][idx].as<int>();
-                lv_label_set_text(zeitLabels[i], zeitBuf);
+                // Zeit direkt aus API-Array lesen (z.B. "2025-06-02T01:00" → "01:00")
+                String timeRaw = doc["hourly"]["time"][idx].as<String>();
+                String timeStr = (timeRaw.length() >= 16) ? timeRaw.substring(11, 16) : "--:--";
+                lv_label_set_text(zeitLabels[i], timeStr.c_str());
                 lv_label_set_text(tempLabels[i], (String((int)round(hTemp)) + "°C").c_str());
                 setTempColor(tempLabels[i], hTemp);
                 setWeatherIcon(icons[i], hCode);
@@ -453,7 +454,7 @@ void fetchWeather() {
             // --- Regen-Warnung: nächste 2 Stunden prüfen ---
             bool regenKommt = false;
             for (int i = 1; i <= 2; i++) {
-                int idx   = min(h + i, 23);
+                int idx   = h + i;
                 int hCode = doc["hourly"]["weather_code"][idx].as<int>();
                 if ((hCode >= 51 && hCode <= 67) ||
                     (hCode >= 80 && hCode <= 82) ||
