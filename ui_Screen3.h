@@ -21,6 +21,7 @@ extern lv_obj_t *ui_TextSonnenaufgang;
 extern lv_obj_t *ui_TextSonnenuntergang;
 extern lv_obj_t *ui_TextUv;
 // CUSTOM VARIABLES
+extern lv_obj_t *uic_Screen3;
 extern lv_obj_t *uic_LabelAufgang;
 extern lv_obj_t *uic_LabelUntergang;
 extern lv_obj_t *uic_LabelUV;

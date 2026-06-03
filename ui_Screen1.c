@@ -11,6 +11,7 @@ lv_obj_t *uic_uiLabelDatum;
 lv_obj_t *uic_ImageWetter;
 lv_obj_t *uic_LabelTemp;
 lv_obj_t *uic_LabelUhr;
+lv_obj_t *uic_Screen1;
 lv_obj_t *ui_Screen1 = NULL;lv_obj_t *ui_LabelUhr = NULL;lv_obj_t *ui_LabelTemp = NULL;lv_obj_t *ui_ImageWetter = NULL;lv_obj_t *ui_uiLabelDatum = NULL;lv_obj_t *ui_LabelWind = NULL;lv_obj_t *ui_LabelWindDir = NULL;
 // event funtions
 
@@ -94,6 +95,7 @@ lv_obj_set_style_text_opa(ui_LabelWindDir, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_align(ui_LabelWindDir, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelWindDir, &lv_font_montserrat_28, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+uic_Screen1 = ui_Screen1;
 uic_LabelUhr = ui_LabelUhr;
 uic_LabelTemp = ui_LabelTemp;
 uic_ImageWetter = ui_ImageWetter;
@@ -108,6 +110,7 @@ void ui_Screen1_screen_destroy(void)
    if (ui_Screen1) lv_obj_del(ui_Screen1);
 
 // NULL screen variables
+uic_Screen1= NULL;
 ui_Screen1= NULL;
 uic_LabelUhr= NULL;
 ui_LabelUhr= NULL;

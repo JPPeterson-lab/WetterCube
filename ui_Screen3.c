@@ -11,6 +11,7 @@ lv_obj_t *uic_TextSonnenaufgang;
 lv_obj_t *uic_LabelUV;
 lv_obj_t *uic_LabelUntergang;
 lv_obj_t *uic_LabelAufgang;
+lv_obj_t *uic_Screen3;
 lv_obj_t *ui_Screen3 = NULL;lv_obj_t *ui_LabelAufgang = NULL;lv_obj_t *ui_LabelUntergang = NULL;lv_obj_t *ui_LabelUV = NULL;lv_obj_t *ui_TextSonnenaufgang = NULL;lv_obj_t *ui_TextSonnenuntergang = NULL;lv_obj_t *ui_TextUv = NULL;
 // event funtions
 
@@ -111,6 +112,7 @@ lv_obj_set_style_bg_opa(ui_TextUv, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_border_color(ui_TextUv, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_border_opa(ui_TextUv, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+uic_Screen3 = ui_Screen3;
 uic_LabelAufgang = ui_LabelAufgang;
 uic_LabelUntergang = ui_LabelUntergang;
 uic_LabelUV = ui_LabelUV;
@@ -125,6 +127,7 @@ void ui_Screen3_screen_destroy(void)
    if (ui_Screen3) lv_obj_del(ui_Screen3);
 
 // NULL screen variables
+uic_Screen3= NULL;
 ui_Screen3= NULL;
 uic_LabelAufgang= NULL;
 ui_LabelAufgang= NULL;

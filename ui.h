@@ -28,10 +28,13 @@ extern "C" {
 #include "ui_events.h"
 
 ///////////////////// SCREENS ////////////////////
+#include "ui_ScreenBoot.h"
 #include "ui_Screen1.h"
+#include "ui_Screen4.h"
 #include "ui_ScreenLager.h"
 #include "ui_Screen2.h"
 #include "ui_Screen3.h"
+#include "ui_uiScreenWarnung.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -45,6 +48,7 @@ LV_IMG_DECLARE( ui_img_thunder_png);   // assets/thunder.png
 LV_IMG_DECLARE( ui_img_fog_png);   // assets/fog.png
 LV_IMG_DECLARE( ui_img_overcast_png);   // assets/overcast.png
 LV_IMG_DECLARE( ui_img_snow_png);   // assets/snow.png
+LV_IMG_DECLARE( ui_img_rain_80x80_png);   // assets/rain_80x80.png
 
 // UI INIT
 void ui_init(void);

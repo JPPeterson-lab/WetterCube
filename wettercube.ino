@@ -28,11 +28,17 @@ bool setupMode = false;
 int currentScreen = 1;
 unsigned long lastTouchTime = 0;
 
+// --- REGEN-WARNUNG ---
+bool regenWarnungAktiv       = false;
+bool regenWarnungBestaetigt  = false;
+unsigned long lastBlinkTime  = 0;
+bool blinkState              = false;
+
 // --- DISPLAY DIMMEN ---
 #define BL_CHANNEL     0
 #define BL_FREQ        5000
 #define BL_RESOLUTION  8          // 8-bit → 0-255
-#define BL_BRIGHT      255        // 100%
+#define BL_BRIGHT      204        // 80%
 #define BL_DIM         51         // 20%
 #define DIM_TIMEOUT    180000UL   // 3 Minuten in ms
 bool isDimmed = false;
@@ -67,11 +73,14 @@ void updateClock();
 void fetchWeather();
 String getWindDirection(int deg);
 bool geocodeLocation(const String& city);
+void setWeatherIcon(lv_obj_t* img, int wmoCode);
+void setTempColor(lv_obj_t* label, float temp);
 void updateWeatherIcon(int wmoCode);
 void startSetupPortal();
 void drawSetupScreen();
 void handleRoot();
 void handleSave();
+void showBootScreen();
 
 void setup() {
     Serial.begin(115200);
@@ -113,21 +122,8 @@ void setup() {
         return;
     }
 
-    Serial.print("Verbinde mit WLAN: "); Serial.println(ssid);
-    WiFi.begin(ssid.c_str(), password.c_str());
-
-    int counter = 0;
-    while (WiFi.status() != WL_CONNECTED && counter < 20) {
-        delay(500);
-        Serial.print(".");
-        counter++;
-    }
-
-    if (WiFi.status() != WL_CONNECTED) {
-        setupMode = true;
-        startSetupPortal();
-        return;
-    }
+    showBootScreen();
+    if (setupMode) return;
 
     Serial.println(" Verbunden!");
     configTzTime("CET-1CEST,M3.5.0,M10.5.0/3", "europe.pool.ntp.org");
@@ -158,6 +154,15 @@ void loop() {
         isDimmed = true;
     }
 
+    // --- Regen-Warnung blinken ---
+    if (regenWarnungAktiv && millis() - lastBlinkTime >= 500) {
+        lastBlinkTime = millis();
+        blinkState = !blinkState;
+        lv_obj_set_style_bg_color(ui_uiScreenWarnung,
+            blinkState ? lv_color_hex(0xCC0000) : lv_color_hex(0x660000),
+            LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
     static unsigned long lastTimeUpdate = 0;
     if (millis() - lastTimeUpdate >= 1000) {
         lastTimeUpdate = millis();
@@ -176,14 +181,27 @@ void checkTouchButton() {
     if (digitalRead(TOUCH_PIN) == HIGH) {
         lastActivityTime = millis();
         if (isDimmed) {
-            // Aufwecken – nur Display heller, kein Screen-Wechsel
             ledcWrite(TFT_BL, BL_BRIGHT);
             isDimmed = false;
+            return;
+        }
+        // Regen-Warnung bestätigen
+        if (regenWarnungAktiv) {
+            if (millis() - lastTouchTime > 500) {
+                lastTouchTime = millis();
+                regenWarnungAktiv = false;
+                regenWarnungBestaetigt = true;
+                lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+                currentScreen = 1;
+            }
             return;
         }
         if (millis() - lastTouchTime > 500) {
             lastTouchTime = millis();
             if (currentScreen == 1) {
+                lv_scr_load_anim(ui_Screen4, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
+                currentScreen = 4;
+            } else if (currentScreen == 4) {
                 lv_scr_load_anim(ui_Screen2, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
                 currentScreen = 2;
             } else if (currentScreen == 2) {
@@ -252,6 +270,44 @@ void handleSave() {
         delay(2000);
         preferences.end();
         ESP.restart();
+    }
+}
+
+// --- BOOT SCREEN ---
+
+void showBootScreen() {
+    lv_disp_load_scr(ui_ScreenBoot);
+    lv_bar_set_value(uic_BarWifi, 0, LV_ANIM_OFF);
+    lv_label_set_text(uic_LabelStatus, "Verbinde mit WLAN...");
+    lv_timer_handler();
+
+    Serial.print("Verbinde mit WLAN: "); Serial.println(ssid);
+    WiFi.begin(ssid.c_str(), password.c_str());
+
+    int maxVersuche = 20;
+    for (int i = 0; i <= maxVersuche; i++) {
+        if (WiFi.status() == WL_CONNECTED) break;
+        delay(500);
+        Serial.print(".");
+        int progress = (i * 100) / maxVersuche;
+        lv_bar_set_value(uic_BarWifi, progress, LV_ANIM_ON);
+        lv_timer_handler();
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        lv_bar_set_value(uic_BarWifi, 100, LV_ANIM_ON);
+        lv_label_set_text(uic_LabelStatus, "Verbunden!");
+        lv_timer_handler();
+        delay(4000);
+        lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+        currentScreen = 1;
+        lv_timer_handler();
+    } else {
+        lv_label_set_text(uic_LabelStatus, "Kein WLAN – Setup wird geoeffnet...");
+        lv_timer_handler();
+        delay(2000);
+        setupMode = true;
+        startSetupPortal();
     }
 }
 
@@ -325,6 +381,7 @@ void fetchWeather() {
     url += "&longitude=" + String(longitude, 4);
     url += "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code";
     url += "&daily=uv_index_max,sunrise,sunset";
+    url += "&hourly=temperature_2m,weather_code";
     url += "&wind_speed_unit=kmh&timezone=auto&forecast_days=1";
 
     Serial.print("Wetter-URL: "); Serial.println(url);
@@ -333,7 +390,7 @@ void fetchWeather() {
 
     if (httpCode == 200) {
         String payload = http.getString();
-        DynamicJsonDocument doc(2048);
+        DynamicJsonDocument doc(6144);
         deserializeJson(doc, payload);
 
         JsonObject current = doc["current"];
@@ -341,16 +398,7 @@ void fetchWeather() {
         float temp = current["temperature_2m"].as<float>();
         lv_label_set_text(ui_LabelTemp, (String((int)round(temp)) + "°C").c_str());
 
-        // Farbe je nach Temperatur
-        if (temp >= 24.0) {
-            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0xFF3300), LV_PART_MAIN | LV_STATE_DEFAULT); // Rot
-        } else if (temp >= 15.0) {
-            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0xFFCC00), LV_PART_MAIN | LV_STATE_DEFAULT); // Gelb
-        } else if (temp >= 8.0) {
-            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0x00CC44), LV_PART_MAIN | LV_STATE_DEFAULT); // Grün
-        } else {
-            lv_obj_set_style_text_color(ui_LabelTemp, lv_color_hex(0x00AAFF), LV_PART_MAIN | LV_STATE_DEFAULT); // Blau
-        }
+        setTempColor(ui_LabelTemp, temp);
 
         int humidity = current["relative_humidity_2m"].as<int>();
         lv_label_set_text(ui_LabelHum, (String(humidity) + "%").c_str());
@@ -381,6 +429,47 @@ void fetchWeather() {
         lv_label_set_text(uic_LabelAufgang,   sunriseTime.c_str());
         lv_label_set_text(uic_LabelUntergang, sunsetTime.c_str());
 
+        // --- Screen 4: Stündliche Vorhersage ---
+        struct tm timeinfo;
+        if (getLocalTime(&timeinfo)) {
+            int h = timeinfo.tm_hour;
+
+            lv_obj_t* zeitLabels[3] = { uic_LabelH1Zeit, uic_LabelH2Zeit, uic_LabelH3Zeit };
+            lv_obj_t* tempLabels[3] = { uic_LabelH1Temp, uic_LabelH2Temp, uic_LabelH3Temp };
+            lv_obj_t* icons[3]      = { uic_ImageH1,     uic_ImageH2,     uic_ImageH3     };
+
+            for (int i = 0; i < 3; i++) {
+                int idx = min(h + 1 + i, 23);
+                char zeitBuf[6];
+                sprintf(zeitBuf, "%02d:00", idx);
+                float hTemp = doc["hourly"]["temperature_2m"][idx].as<float>();
+                int   hCode = doc["hourly"]["weather_code"][idx].as<int>();
+                lv_label_set_text(zeitLabels[i], zeitBuf);
+                lv_label_set_text(tempLabels[i], (String((int)round(hTemp)) + "°C").c_str());
+                setTempColor(tempLabels[i], hTemp);
+                setWeatherIcon(icons[i], hCode);
+            }
+
+            // --- Regen-Warnung: nächste 2 Stunden prüfen ---
+            bool regenKommt = false;
+            for (int i = 1; i <= 2; i++) {
+                int idx   = min(h + i, 23);
+                int hCode = doc["hourly"]["weather_code"][idx].as<int>();
+                if ((hCode >= 51 && hCode <= 67) ||
+                    (hCode >= 80 && hCode <= 82) ||
+                     hCode >= 95) {
+                    regenKommt = true;
+                    break;
+                }
+            }
+            if (!regenKommt) regenWarnungBestaetigt = false; // Reset für nächste Warnung
+            if (regenKommt && !regenWarnungBestaetigt && !regenWarnungAktiv) {
+                regenWarnungAktiv = true;
+                lv_scr_load(ui_uiScreenWarnung);
+                currentScreen = 99;
+            }
+        }
+
         lastWeatherUpdate = millis();
         Serial.printf("Wetter OK: %.1f°C, %d%%, WMO %d, UV %.1f\n", temp, humidity, wmoCode, uvMax);
     } else {
@@ -393,30 +482,39 @@ void fetchWeather() {
 // --- ICON-AUSWAHL nach WMO-Code ---
 // WMO Codes: https://open-meteo.com/en/docs#weathervariables
 
-void updateWeatherIcon(int wmoCode) {
+void setWeatherIcon(lv_obj_t* img, int wmoCode) {
     if (wmoCode == 0 || wmoCode == 1) {
-        // Klarer Himmel / überwiegend klar
-        lv_img_set_src(ui_ImageWetter, &ui_img_day_clear_png);
+        lv_img_set_src(img, &ui_img_day_clear_png);
     } else if (wmoCode == 2 || wmoCode == 3) {
-        // Teilweise bewölkt / bedeckt
-        lv_img_set_src(ui_ImageWetter, &ui_img_overcast_png);
+        lv_img_set_src(img, &ui_img_overcast_png);
     } else if (wmoCode == 45 || wmoCode == 48) {
-        // Nebel
-        lv_img_set_src(ui_ImageWetter, &ui_img_fog_png);
+        lv_img_set_src(img, &ui_img_fog_png);
     } else if ((wmoCode >= 51 && wmoCode <= 67) ||
                (wmoCode >= 80 && wmoCode <= 82)) {
-        // Nieselregen, Regen, Regenschauer
-        lv_img_set_src(ui_ImageWetter, &ui_img_rain_png);
+        lv_img_set_src(img, &ui_img_rain_png);
     } else if ((wmoCode >= 71 && wmoCode <= 77) ||
                wmoCode == 85 || wmoCode == 86) {
-        // Schnee
-        lv_img_set_src(ui_ImageWetter, &ui_img_snow_png);
+        lv_img_set_src(img, &ui_img_snow_png);
     } else if (wmoCode >= 95) {
-        // Gewitter
-        lv_img_set_src(ui_ImageWetter, &ui_img_thunder_png);
+        lv_img_set_src(img, &ui_img_thunder_png);
     } else {
-        // Fallback: bewölkt
-        lv_img_set_src(ui_ImageWetter, &ui_img_overcast_png);
+        lv_img_set_src(img, &ui_img_overcast_png);
+    }
+}
+
+void updateWeatherIcon(int wmoCode) {
+    setWeatherIcon(ui_ImageWetter, wmoCode);
+}
+
+void setTempColor(lv_obj_t* label, float temp) {
+    if (temp >= 24.0) {
+        lv_obj_set_style_text_color(label, lv_color_hex(0xFF3300), LV_PART_MAIN | LV_STATE_DEFAULT); // Rot
+    } else if (temp >= 15.0) {
+        lv_obj_set_style_text_color(label, lv_color_hex(0xFFCC00), LV_PART_MAIN | LV_STATE_DEFAULT); // Gelb
+    } else if (temp >= 8.0) {
+        lv_obj_set_style_text_color(label, lv_color_hex(0x00CC44), LV_PART_MAIN | LV_STATE_DEFAULT); // Grün
+    } else {
+        lv_obj_set_style_text_color(label, lv_color_hex(0x00AAFF), LV_PART_MAIN | LV_STATE_DEFAULT); // Blau
     }
 }
 

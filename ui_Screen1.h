@@ -21,6 +21,7 @@ extern lv_obj_t *ui_uiLabelDatum;
 extern lv_obj_t *ui_LabelWind;
 extern lv_obj_t *ui_LabelWindDir;
 // CUSTOM VARIABLES
+extern lv_obj_t *uic_Screen1;
 extern lv_obj_t *uic_LabelUhr;
 extern lv_obj_t *uic_LabelTemp;
 extern lv_obj_t *uic_ImageWetter;
