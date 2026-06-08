@@ -41,6 +41,7 @@ ui_ScreenLager_screen_init();
 ui_Screen2_screen_init();
 ui_Screen3_screen_init();
 ui_uiScreenWarnung_screen_init();
+ui_ScreenPollen_screen_init();
 ui____initial_actions0 = lv_obj_create(NULL);
 lv_disp_load_scr( ui_ScreenBoot);
 }
@@ -53,4 +54,5 @@ ui_ScreenLager_screen_destroy();
 ui_Screen2_screen_destroy();
 ui_Screen3_screen_destroy();
 ui_uiScreenWarnung_screen_destroy();
+ui_ScreenPollen_screen_destroy();
 }

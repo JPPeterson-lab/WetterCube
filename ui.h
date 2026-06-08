@@ -35,6 +35,7 @@ extern "C" {
 #include "ui_Screen2.h"
 #include "ui_Screen3.h"
 #include "ui_uiScreenWarnung.h"
+#include "ui_ScreenPollen.h"
 
 ///////////////////// VARIABLES ////////////////////
 

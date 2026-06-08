@@ -75,6 +75,8 @@ String getWindDirection(int deg);
 bool geocodeLocation(const String& city);
 void setWeatherIcon(lv_obj_t* img, int wmoCode);
 void setTempColor(lv_obj_t* label, float temp);
+void fetchPollen();
+void setPollenLabel(lv_obj_t* label, float value);
 void updateWeatherIcon(int wmoCode);
 void startSetupPortal();
 void drawSetupScreen();
@@ -134,6 +136,7 @@ void setup() {
     }
 
     fetchWeather();
+    fetchPollen();
 }
 
 void loop() {
@@ -172,6 +175,7 @@ void loop() {
     if (millis() - lastWeatherUpdate >= weatherInterval) {
         lastWeatherUpdate = millis();
         fetchWeather();
+        fetchPollen();
     }
 }
 
@@ -207,6 +211,9 @@ void checkTouchButton() {
             } else if (currentScreen == 2) {
                 lv_scr_load_anim(ui_Screen3, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
                 currentScreen = 3;
+            } else if (currentScreen == 3) {
+                lv_scr_load_anim(ui_ScreenPollen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
+                currentScreen = 5;
             } else {
                 lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
                 currentScreen = 1;
@@ -477,6 +484,71 @@ void fetchWeather() {
         Serial.printf("Wetter-Fehler: HTTP %d\n", httpCode);
     }
 
+    http.end();
+}
+
+// --- POLLEN ---
+
+void setPollenLabel(lv_obj_t* label, float value) {
+    const char* text;
+    uint32_t    color;
+
+    if (value <= 0) {
+        text = "Keine";    color = 0x888888;
+    } else if (value <= 10) {
+        text = "Gering";   color = 0x00CC44;
+    } else if (value <= 30) {
+        text = "Maessig";  color = 0xFFCC00;
+    } else if (value <= 100) {
+        text = "Hoch";     color = 0xFF8800;
+    } else {
+        text = "Sehr hoch"; color = 0xFF3300;
+    }
+    lv_label_set_text(label, text);
+    lv_obj_set_style_text_color(label, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void fetchPollen() {
+    if (WiFi.status() != WL_CONNECTED) return;
+    if (latitude == 0.0 && longitude == 0.0) return;
+
+    HTTPClient http;
+    String url = "https://air-quality-api.open-meteo.com/v1/air-quality";
+    url += "?latitude="  + String(latitude, 4);
+    url += "&longitude=" + String(longitude, 4);
+    url += "&hourly=birch_pollen,grass_pollen,alder_pollen,mugwort_pollen,ragweed_pollen";
+    url += "&timezone=auto&forecast_days=1";
+
+    Serial.print("Pollen-URL: "); Serial.println(url);
+    http.begin(url);
+    int httpCode = http.GET();
+
+    if (httpCode == 200) {
+        String payload = http.getString();
+        DynamicJsonDocument doc(4096);
+        deserializeJson(doc, payload);
+
+        struct tm timeinfo;
+        if (!getLocalTime(&timeinfo)) { http.end(); return; }
+        int h = timeinfo.tm_hour;
+
+        float birke    = doc["hourly"]["birch_pollen"][h].as<float>();
+        float graeser  = doc["hourly"]["grass_pollen"][h].as<float>();
+        float erle     = doc["hourly"]["alder_pollen"][h].as<float>();
+        float beifuss  = doc["hourly"]["mugwort_pollen"][h].as<float>();
+        float ambrosia = doc["hourly"]["ragweed_pollen"][h].as<float>();
+
+        setPollenLabel(uic_LabelBirkeWert,    birke);
+        setPollenLabel(uic_LabelGraeserWert,  graeser);
+        setPollenLabel(uic_LabelErleWert,     erle);
+        setPollenLabel(uic_LabelBeifussWert,  beifuss);
+        setPollenLabel(uic_LabelAmbrosiaWert, ambrosia);
+
+        Serial.printf("Pollen OK: Birke %.1f, Graeser %.1f, Erle %.1f, Beifuss %.1f, Ambrosia %.1f\n",
+                      birke, graeser, erle, beifuss, ambrosia);
+    } else {
+        Serial.printf("Pollen-Fehler: HTTP %d\n", httpCode);
+    }
     http.end();
 }
 
