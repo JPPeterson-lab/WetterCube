@@ -29,6 +29,28 @@ kein API-Key nötig.
 
 ---
 
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="https://github.com/user-attachments/assets/7d44195b-d34a-47a4-9a6a-96ac4a90117f" width="200"><br><sub>Hauptscreen</sub></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/35a868d7-1ee0-4758-ba8e-9ad3a814f9bb" width="200"><br><sub>3h-Forecast</sub></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/33250787-9aff-4c1b-8768-685cf4746f6f" width="200"><br><sub>Luftfeuchte & Luftdruck</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://github.com/user-attachments/assets/52d5c9d9-0ce6-423f-8494-f2a8a9e3eed4" width="200"><br><sub>UV-Index & Sonnenauf-/-untergang</sub></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/47125d06-c454-4345-929f-5271cdd97e5b" width="200"><br><sub>Pollenbelastung</sub></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/36dc4fa6-f778-45de-9230-ef686976ba54" width="200"><br><sub>Regen-Warnung</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://github.com/user-attachments/assets/bcaab0f3-f329-4bdd-8b18-008927d5eb12" width="200"><br><sub>Pollen-Warnung</sub></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/c1873d5d-aa35-45dd-b6f7-010914dcf626" width="200"><br><sub>Web-Konfiguration</sub></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/ba505494-ce5e-46c3-8caf-9a8b7faca99e" width="200"><br><sub>Web-Konfiguration (Detail)</sub></td>
+  </tr>
+</table>
+
+---
+
 ## ⚡ Web-Installer (kein Arduino IDE nötig)
 
 Die Firmware lässt sich direkt im Browser flashen – ganz ohne
