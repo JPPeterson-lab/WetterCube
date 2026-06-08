@@ -16,12 +16,13 @@ kein API-Key nötig.
 - **Windgeschwindigkeit** (km/h)
 - **Wetter-Icons** nach WMO-Code (klar, bewölkt, Regen, Schnee, Gewitter, Nebel)
 - **Uhrzeit & Datum** per NTP (Zeitzone Europa/Berlin)
+- **Pollenanzeige** für Birke, Graeser, Erle, Beifuß und Ambrosia
 - **Screen 2:** 3 Stunden Wetter Forecast
 - **Screen 3:** Wind, Luftdruck, gefühlte Temperatur
 - **Screen 4:** UV-Index (Max), Sonnenaufgang & Sonnenuntergang
 - **Captive-Portal-Setup:** WLAN + Standort bequem per Browser einstellen
 - **Regen-Warnung** Roter Screen blinkt 60 Min bevor der angesagte Regen eintreten soll, wird durch Touch berührung quittiert
-- **Automatisches Dimmern** Nach 3 Min automatisches Dimmen bis die Touch Funktion genutzt wird
+- **Automatisches Dimmen** Nach 3 Min automatisches Dimmen bis die Touch Funktion genutzt wird
 
 ---
 
