@@ -8,6 +8,7 @@ SET(SOURCES ui_comp_imagewetter.c
     ui_Screen3.c
     ui_uiScreenWarnung.c
     ui_ScreenPollen.c
+    ui_uiScreenWarnungPollen.c
     ui.c
     ui_comp_hook.c
     ui_helpers.c
@@ -17,6 +18,7 @@ SET(SOURCES ui_comp_imagewetter.c
     ui_img_fog_png.c
     ui_img_overcast_png.c
     ui_img_snow_png.c
-    ui_img_rain_80x80_png.c)
+    ui_img_rain_80x80_png.c
+    ui_img_alert_png.c)
 
 add_library(ui ${SOURCES})

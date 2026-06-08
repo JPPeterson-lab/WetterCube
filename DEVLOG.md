@@ -123,6 +123,22 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - Je Stunde: Uhrzeit (HH:00), Wettericon, Temperatur mit Farbwechsel
 - Widgets: `uic_LabelH1/2/3Zeit`, `uic_ImageH1/2/3`, `uic_LabelH1/2/3Temp`
 
+### Pollen-Screen (`ScreenPollen`)
+- Separater API-Aufruf: Open-Meteo Air Quality API (kostenlos, kein Key)
+- 5 Pollenarten: Birke, Gräser, Erle, Beifuß, Ambrosia
+- Farbindikator: Keine (grau) / Gering (grün) / Mäßig (gelb) / Hoch (orange) / Sehr hoch (rot)
+- Abruf gleichzeitig mit Wetter alle 15 Minuten
+- API-Mapping: birch_pollen, grass_pollen, alder_pollen, mugwort_pollen, ragweed_pollen
+- Widgets: `uic_LabelBirkeWert`, `uic_LabelGraeserWert`, `uic_LabelErleWert`, `uic_LabelBeifussWert`, `uic_LabelAmbrosiaWert`
+
+### Pollen-Warnung (`uiScreenWarnungPollen`)
+- Trigger: irgendein Pollenwert > 30 (Hoch) oder > 100 (Sehr hoch)
+- Sehr hoch hat Vorrang – wird zuerst angezeigt
+- Blinkt zwischen `#FF8800` und `#CC5500` (alle 500ms)
+- `uic_LabelPollenWarnArt` zeigt z.B. "Birke: Sehr hoch"
+- Bestätigung: Touch → zurück zu Screen 1
+- Reset wenn alle Werte wieder ≤ 30
+
 ### Regen-Warnung (`uiScreenWarnung`)
 - Prüft stündliche Wettercodes für die nächsten 2 Stunden
 - Auslöser: WMO 51–67 (Regen), 80–82 (Schauer), ≥95 (Gewitter)
@@ -151,7 +167,9 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - **LV_COLOR_16_SWAP** muss nach jedem SLS-Export in `ui.c` auskommentiert werden
 - Unicode-Pfeile (↑↗→) werden von Montserrat nicht unterstützt → Klartext-Richtungen verwenden
 - ESP32 Arduino Core 3.x: `ledcSetup()`/`ledcAttachPin()` → ersetzt durch `ledcAttach(pin, freq, res)`
-- JSON-Buffer muss groß genug sein (6144 Bytes) da hourly-Daten 24 Einträge liefern
+- JSON-Buffer Wetter: 8192 Bytes (forecast_days=2 → 48 Stunden-Einträge)
+- JSON-Buffer Pollen: 4096 Bytes (forecast_days=1 → 24 Einträge)
+- Forecast-Index darf nie auf 23 geclampt werden → forecast_days=2 + Zeit aus API-Array lesen
 - Web-Installer braucht Chrome oder Edge (WebSerial API)
 - Nach GitHub-Repo privat/öffentlich Wechsel: GitHub Pages manuell reaktivieren unter Settings → Pages
 
@@ -166,6 +184,10 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.1.0 | Screen 3 (UV, Sunrise, Sunset), Long-Press Reset (später entfernt) |
 | 1.1.1 | Windrichtung, Display-Dimmen, Temperatur-Farbwechsel, UI-Überarbeitung |
 | 1.2.0 | Boot-Screen, 3-Stunden-Forecast (Screen 4), Regen-Warnung |
+| 1.3.0 | Display-Helligkeit 80%, Temperaturfarben auf Forecast, Screenreihenfolge 1→4→2→3 |
+| 1.3.1 | Bugfix: Forecast-Überlauf nach 23:00 (forecast_days=2, Zeit aus API-Array) |
+| 1.4.0 | Pollen-Screen mit Open-Meteo Air Quality API |
+| 1.4.1 | Pollen-Warnscreen (blinkend orange, Touch-Quittierung) |
 
 ---
 

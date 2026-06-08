@@ -36,6 +36,7 @@ extern "C" {
 #include "ui_Screen3.h"
 #include "ui_uiScreenWarnung.h"
 #include "ui_ScreenPollen.h"
+#include "ui_uiScreenWarnungPollen.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -50,6 +51,7 @@ LV_IMG_DECLARE( ui_img_fog_png);   // assets/fog.png
 LV_IMG_DECLARE( ui_img_overcast_png);   // assets/overcast.png
 LV_IMG_DECLARE( ui_img_snow_png);   // assets/snow.png
 LV_IMG_DECLARE( ui_img_rain_80x80_png);   // assets/rain_80x80.png
+LV_IMG_DECLARE( ui_img_alert_png);   // assets/alert.png
 
 // UI INIT
 void ui_init(void);

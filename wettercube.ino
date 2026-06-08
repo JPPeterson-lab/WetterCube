@@ -34,6 +34,12 @@ bool regenWarnungBestaetigt  = false;
 unsigned long lastBlinkTime  = 0;
 bool blinkState              = false;
 
+// --- POLLEN-WARNUNG ---
+bool pollenWarnungAktiv      = false;
+bool pollenWarnungBestaetigt = false;
+unsigned long lastPollenBlink = 0;
+bool pollenBlinkState        = false;
+
 // --- DISPLAY DIMMEN ---
 #define BL_CHANNEL     0
 #define BL_FREQ        5000
@@ -157,6 +163,15 @@ void loop() {
         isDimmed = true;
     }
 
+    // --- Pollen-Warnung blinken ---
+    if (pollenWarnungAktiv && millis() - lastPollenBlink >= 500) {
+        lastPollenBlink = millis();
+        pollenBlinkState = !pollenBlinkState;
+        lv_obj_set_style_bg_color(ui_uiScreenWarnungPollen,
+            pollenBlinkState ? lv_color_hex(0xFF8800) : lv_color_hex(0xCC5500),
+            LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
     // --- Regen-Warnung blinken ---
     if (regenWarnungAktiv && millis() - lastBlinkTime >= 500) {
         lastBlinkTime = millis();
@@ -187,6 +202,17 @@ void checkTouchButton() {
         if (isDimmed) {
             ledcWrite(TFT_BL, BL_BRIGHT);
             isDimmed = false;
+            return;
+        }
+        // Pollen-Warnung bestätigen
+        if (pollenWarnungAktiv) {
+            if (millis() - lastTouchTime > 500) {
+                lastTouchTime = millis();
+                pollenWarnungAktiv = false;
+                pollenWarnungBestaetigt = true;
+                lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+                currentScreen = 1;
+            }
             return;
         }
         // Regen-Warnung bestätigen
@@ -546,6 +572,32 @@ void fetchPollen() {
 
         Serial.printf("Pollen OK: Birke %.1f, Graeser %.1f, Erle %.1f, Beifuss %.1f, Ambrosia %.1f\n",
                       birke, graeser, erle, beifuss, ambrosia);
+
+        // --- Pollen-Warnung prüfen (Hoch > 30) ---
+        struct { const char* name; float wert; } pollenListe[] = {
+            {"Birke",    birke},
+            {"Graeser",  graeser},
+            {"Erle",     erle},
+            {"Beifuss",  beifuss},
+            {"Ambrosia", ambrosia}
+        };
+        String warnText = "";
+        for (auto& p : pollenListe) {
+            if (p.wert > 100) {
+                warnText = String(p.name) + ": Sehr hoch"; break;
+            } else if (p.wert > 30 && warnText == "") {
+                warnText = String(p.name) + ": Hoch";
+            }
+        }
+        if (warnText == "") {
+            pollenWarnungBestaetigt = false; // Reset für nächste Warnung
+        }
+        if (warnText != "" && !pollenWarnungBestaetigt && !pollenWarnungAktiv) {
+            lv_label_set_text(uic_LabelPollenWarnArt, warnText.c_str());
+            pollenWarnungAktiv = true;
+            lv_scr_load(ui_uiScreenWarnungPollen);
+            currentScreen = 98;
+        }
     } else {
         Serial.printf("Pollen-Fehler: HTTP %d\n", httpCode);
     }
