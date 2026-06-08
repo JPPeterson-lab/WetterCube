@@ -22,6 +22,7 @@ kein API-Key nötig.
 - **Screen 4:** UV-Index (Max), Sonnenaufgang & Sonnenuntergang
 - **Captive-Portal-Setup:** WLAN + Standort bequem per Browser einstellen
 - **Regen-Warnung** Roter Screen blinkt 60 Min bevor der angesagte Regen eintreten soll, wird durch Touch berührung quittiert
+- **Pollen-Warnscreen** Roter Screen blinkt bei Belastung Hoch (>30) oder Sehr hoch (>100), wird durch Touch berührung quittiert oder restettet sich selbst bei Belastung <30
 - **Automatisches Dimmen** Nach 3 Min automatisches Dimmen bis die Touch Funktion genutzt wird
 
 ---
