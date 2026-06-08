@@ -198,7 +198,9 @@ There are two options:
 
 Option 1 – mDNS (Recommended)
 
-text http://wettercube.local 
+```
+http://wettercube.local 
+```
 
 Works directly on macOS, iPhone, Android, and Windows 11.
 
@@ -208,7 +210,9 @@ Option 2 – IP Address
 
 The IP address is displayed for 5 seconds after connecting to Wi-Fi, for example:
 
-text Connected!  IP: 192.168.1.47 
+```
+IP: 192.168.1.47 
+```
 
 Simply enter this address into your browser. The IP address may change after a reboot. If that happens, restart the cube and note the new address.
 
