@@ -7,6 +7,7 @@
 #include <Arduino_GFX_Library.h>
 #include <WebServer.h>
 #include <Preferences.h>
+#include <ESPmDNS.h>
 #include <ui.h>
 
 // --- SPEICHER & WEB-SERVER ---
@@ -46,9 +47,19 @@ bool pollenBlinkState        = false;
 #define BL_RESOLUTION  8          // 8-bit → 0-255
 #define BL_BRIGHT      204        // 80%
 #define BL_DIM         51         // 20%
-#define DIM_TIMEOUT    180000UL   // 3 Minuten in ms
 bool isDimmed = false;
 unsigned long lastActivityTime = 0;
+unsigned long dimTimeoutMs = 180000UL; // Standard: 3 Minuten (überschreibbar per Webconfig)
+
+// --- WEBCONFIG-EINSTELLUNGEN ---
+bool regenWarnungEnabled  = true;
+bool pollenWarnungEnabled = true;
+bool screen2Enabled       = true;
+bool screen3Enabled       = true;
+bool screen4Enabled       = true;
+bool screen5Enabled       = true;
+int  pollenSchwellwert    = 30;   // >30 = Hoch, >100 = Sehr hoch
+int  dimTimeoutMin        = 3;    // 0=Aus, 1, 3, 5, 10 Minuten
 
 // --- DISPLAY HARDWARE PINS ---
 #define TFT_MOSI 20
@@ -89,6 +100,10 @@ void drawSetupScreen();
 void handleRoot();
 void handleSave();
 void showBootScreen();
+void loadConfig();
+void startConfigServer();
+void handleConfig();
+void handleConfigSave();
 
 void setup() {
     Serial.begin(115200);
@@ -122,6 +137,7 @@ void setup() {
     location  = preferences.getString("location", "");
     latitude  = preferences.getFloat("lat", 0.0);
     longitude = preferences.getFloat("lon", 0.0);
+    loadConfig();
 
     // Setup-Modus wenn kein WLAN oder kein Standort gespeichert
     if (ssid.length() < 4 || location.length() < 2) {
@@ -153,12 +169,13 @@ void loop() {
     }
 
     lv_timer_handler();
+    server.handleClient(); // Config-Webserver im Normalbetrieb
     delay(5);
 
     checkTouchButton();
 
     // --- Display dimmen nach Inaktivität ---
-    if (!isDimmed && millis() - lastActivityTime >= DIM_TIMEOUT) {
+    if (!isDimmed && dimTimeoutMs > 0 && millis() - lastActivityTime >= dimTimeoutMs) {
         ledcWrite(TFT_BL, BL_DIM);
         isDimmed = true;
     }
@@ -228,21 +245,24 @@ void checkTouchButton() {
         }
         if (millis() - lastTouchTime > 500) {
             lastTouchTime = millis();
-            if (currentScreen == 1) {
-                lv_scr_load_anim(ui_Screen4, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
-                currentScreen = 4;
-            } else if (currentScreen == 4) {
-                lv_scr_load_anim(ui_Screen2, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
-                currentScreen = 2;
-            } else if (currentScreen == 2) {
-                lv_scr_load_anim(ui_Screen3, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
-                currentScreen = 3;
-            } else if (currentScreen == 3) {
-                lv_scr_load_anim(ui_ScreenPollen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
-                currentScreen = 5;
-            } else {
-                lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
-                currentScreen = 1;
+            // Screenliste: 1 (immer aktiv), 4, 2, 3, 5
+            int  order[]   = {1, 4, 2, 3, 5};
+            bool enabled[] = {true, screen4Enabled, screen2Enabled, screen3Enabled, screen5Enabled};
+            // Aktuellen Index finden
+            int curIdx = 0;
+            for (int i = 0; i < 5; i++) { if (order[i] == currentScreen) { curIdx = i; break; } }
+            // Nächsten aktiven Screen suchen
+            int nextScreen = 1;
+            for (int i = 1; i <= 5; i++) {
+                int ni = (curIdx + i) % 5;
+                if (enabled[ni]) { nextScreen = order[ni]; break; }
+            }
+            // Screen laden
+            lv_obj_t* screens[] = {nullptr, ui_Screen1, ui_Screen2, ui_Screen3, ui_Screen4, ui_ScreenPollen};
+            lv_scr_load_anim_t animDir = (nextScreen == 1 && curIdx >= 1) ? LV_SCR_LOAD_ANIM_MOVE_RIGHT : LV_SCR_LOAD_ANIM_MOVE_LEFT;
+            if (nextScreen >= 1 && nextScreen <= 5) {
+                lv_scr_load_anim(screens[nextScreen], animDir, 300, 0, false);
+                currentScreen = nextScreen;
             }
         }
     }
@@ -329,9 +349,17 @@ void showBootScreen() {
 
     if (WiFi.status() == WL_CONNECTED) {
         lv_bar_set_value(uic_BarWifi, 100, LV_ANIM_ON);
-        lv_label_set_text(uic_LabelStatus, "Verbunden!");
+        // IP-Adresse anzeigen
+        String ipStr = "Verbunden!  IP: " + WiFi.localIP().toString();
+        lv_label_set_text(uic_LabelStatus, ipStr.c_str());
         lv_timer_handler();
-        delay(4000);
+        // mDNS starten → erreichbar als http://wettercube.local
+        if (MDNS.begin("wettercube")) {
+            Serial.println("mDNS: http://wettercube.local");
+        }
+        // Config-Webserver starten
+        startConfigServer();
+        delay(5000); // 5 Sekunden IP anzeigen
         lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
         currentScreen = 1;
         lv_timer_handler();
@@ -497,7 +525,7 @@ void fetchWeather() {
                 }
             }
             if (!regenKommt) regenWarnungBestaetigt = false; // Reset für nächste Warnung
-            if (regenKommt && !regenWarnungBestaetigt && !regenWarnungAktiv) {
+            if (regenKommt && regenWarnungEnabled && !regenWarnungBestaetigt && !regenWarnungAktiv) {
                 regenWarnungAktiv = true;
                 lv_scr_load(ui_uiScreenWarnung);
                 currentScreen = 99;
@@ -573,7 +601,7 @@ void fetchPollen() {
         Serial.printf("Pollen OK: Birke %.1f, Graeser %.1f, Erle %.1f, Beifuss %.1f, Ambrosia %.1f\n",
                       birke, graeser, erle, beifuss, ambrosia);
 
-        // --- Pollen-Warnung prüfen (Hoch > 30) ---
+        // --- Pollen-Warnung prüfen (Schwellwert konfigurierbar) ---
         struct { const char* name; float wert; } pollenListe[] = {
             {"Birke",    birke},
             {"Graeser",  graeser},
@@ -583,16 +611,18 @@ void fetchPollen() {
         };
         String warnText = "";
         for (auto& p : pollenListe) {
-            if (p.wert > 100) {
+            if (p.wert > 100 && pollenSchwellwert <= 100) {
                 warnText = String(p.name) + ": Sehr hoch"; break;
-            } else if (p.wert > 30 && warnText == "") {
+            } else if (p.wert > 30 && pollenSchwellwert <= 30 && warnText == "") {
                 warnText = String(p.name) + ": Hoch";
+            } else if (p.wert > 10 && pollenSchwellwert <= 10 && warnText == "") {
+                warnText = String(p.name) + ": Maessig";
             }
         }
         if (warnText == "") {
             pollenWarnungBestaetigt = false; // Reset für nächste Warnung
         }
-        if (warnText != "" && !pollenWarnungBestaetigt && !pollenWarnungAktiv) {
+        if (warnText != "" && pollenWarnungEnabled && !pollenWarnungBestaetigt && !pollenWarnungAktiv) {
             lv_label_set_text(uic_LabelPollenWarnArt, warnText.c_str());
             pollenWarnungAktiv = true;
             lv_scr_load(ui_uiScreenWarnungPollen);
@@ -661,4 +691,148 @@ void updateClock() {
         timeinfo.tm_mon + 1,
         timeinfo.tm_year + 1900);
     lv_label_set_text(ui_uiLabelDatum, datumsPuffer);
+}
+
+// =============================================================================
+// --- KONFIGURATION LADEN ---
+// =============================================================================
+
+void loadConfig() {
+    regenWarnungEnabled  = preferences.getBool("regenWarn",   true);
+    pollenWarnungEnabled = preferences.getBool("pollenWarn",  true);
+    screen2Enabled       = preferences.getBool("scr2",        true);
+    screen3Enabled       = preferences.getBool("scr3",        true);
+    screen4Enabled       = preferences.getBool("scr4",        true);
+    screen5Enabled       = preferences.getBool("scr5",        true);
+    pollenSchwellwert    = preferences.getInt("pollenThresh", 30);
+    dimTimeoutMin        = preferences.getInt("dimTime",      3);
+    // Minuten → Millisekunden umrechnen (0 = Dimmen aus)
+    if (dimTimeoutMin <= 0) {
+        dimTimeoutMs = 0;
+    } else {
+        dimTimeoutMs = (unsigned long)dimTimeoutMin * 60UL * 1000UL;
+    }
+    Serial.printf("Config geladen: regenWarn=%d pollenWarn=%d scr2=%d scr3=%d scr4=%d scr5=%d pollenThresh=%d dimTime=%dmin\n",
+        regenWarnungEnabled, pollenWarnungEnabled,
+        screen2Enabled, screen3Enabled, screen4Enabled, screen5Enabled,
+        pollenSchwellwert, dimTimeoutMin);
+}
+
+// =============================================================================
+// --- CONFIG WEBSERVER ---
+// =============================================================================
+
+void startConfigServer() {
+    server.on("/",            handleConfig);
+    server.on("/config",      handleConfig);
+    server.on("/config/save", handleConfigSave);
+    server.begin();
+    Serial.println("Config-Server gestartet auf Port 80");
+}
+
+void handleConfig() {
+    String ip  = WiFi.localIP().toString();
+    String chk = " checked";
+
+    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+    html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
+    html += "<title>WetterCube Einstellungen</title>";
+    html += "<style>";
+    html += "body{font-family:Arial,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px;}";
+    html += "h1{color:#58a6ff;font-size:1.4em;margin-bottom:4px;}";
+    html += "p.sub{color:#8b949e;font-size:.85em;margin-top:0;}";
+    html += ".card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;margin:14px 0;max-width:460px;}";
+    html += ".card h2{color:#58a6ff;font-size:1em;margin-top:0;}";
+    html += ".row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #21262d;}";
+    html += ".row:last-child{border-bottom:none;}";
+    html += ".row label{font-size:.95em;}";
+    html += "select{background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:5px;padding:5px 10px;font-size:.9em;}";
+    html += "input[type=checkbox]{width:18px;height:18px;accent-color:#58a6ff;cursor:pointer;}";
+    html += "button{background:#238636;color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:1em;cursor:pointer;margin-top:6px;width:100%;max-width:460px;}";
+    html += "button:hover{background:#2ea043;}";
+    html += ".info{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;max-width:460px;font-size:.85em;color:#8b949e;margin-bottom:14px;}";
+    html += ".info span{color:#58a6ff;font-weight:bold;}";
+    html += "</style></head><body>";
+    html += "<h1>&#9729; WetterCube</h1>";
+    html += "<p class='sub'>Einstellungen &amp; Konfiguration</p>";
+
+    // Info-Bereich
+    html += "<div class='info'>Ger&auml;t: <span>WetterCube</span> &nbsp;|&nbsp; IP: <span>" + ip + "</span> &nbsp;|&nbsp; ";
+    html += "URL: <span>http://wettercube.local</span></div>";
+
+    html += "<form action='/config/save' method='POST'>";
+
+    // --- Warnungen ---
+    html += "<div class='card'><h2>&#9888; Warnungen</h2>";
+    html += "<div class='row'><label>Regen-Warnung</label>";
+    html += "<input type='checkbox' name='regenWarn' value='1'" + String(regenWarnungEnabled ? chk : "") + "></div>";
+    html += "<div class='row'><label>Pollen-Warnung</label>";
+    html += "<input type='checkbox' name='pollenWarn' value='1'" + String(pollenWarnungEnabled ? chk : "") + "></div>";
+    html += "<div class='row'><label>Pollen-Schwellwert</label>";
+    html += "<select name='pollenThresh'>";
+    html += "<option value='10'"  + String(pollenSchwellwert == 10  ? " selected" : "") + ">M&auml;&szlig;ig (&gt;10)</option>";
+    html += "<option value='30'"  + String(pollenSchwellwert == 30  ? " selected" : "") + ">Hoch (&gt;30)</option>";
+    html += "<option value='100'" + String(pollenSchwellwert == 100 ? " selected" : "") + ">Sehr hoch (&gt;100)</option>";
+    html += "</select></div></div>";
+
+    // --- Screens ---
+    html += "<div class='card'><h2>&#128250; Screens aktivieren</h2>";
+    html += "<div class='row'><label>Screen 1 – Hauptanzeige</label><input type='checkbox' disabled checked></div>";
+    html += "<div class='row'><label>Screen 4 – 3h-Vorhersage</label>";
+    html += "<input type='checkbox' name='scr4' value='1'" + String(screen4Enabled ? chk : "") + "></div>";
+    html += "<div class='row'><label>Screen 2 – Luftfeuchte / Druck</label>";
+    html += "<input type='checkbox' name='scr2' value='1'" + String(screen2Enabled ? chk : "") + "></div>";
+    html += "<div class='row'><label>Screen 3 – UV / Sonnenauf- &amp; untergang</label>";
+    html += "<input type='checkbox' name='scr3' value='1'" + String(screen3Enabled ? chk : "") + "></div>";
+    html += "<div class='row'><label>Screen 5 – Pollen</label>";
+    html += "<input type='checkbox' name='scr5' value='1'" + String(screen5Enabled ? chk : "") + "></div></div>";
+
+    // --- Display ---
+    html += "<div class='card'><h2>&#128261; Display</h2>";
+    html += "<div class='row'><label>Dimmen nach</label>";
+    html += "<select name='dimTime'>";
+    html += "<option value='0'"  + String(dimTimeoutMin == 0  ? " selected" : "") + ">Aus</option>";
+    html += "<option value='1'"  + String(dimTimeoutMin == 1  ? " selected" : "") + ">1 Minute</option>";
+    html += "<option value='3'"  + String(dimTimeoutMin == 3  ? " selected" : "") + ">3 Minuten</option>";
+    html += "<option value='5'"  + String(dimTimeoutMin == 5  ? " selected" : "") + ">5 Minuten</option>";
+    html += "<option value='10'" + String(dimTimeoutMin == 10 ? " selected" : "") + ">10 Minuten</option>";
+    html += "</select></div></div>";
+
+    html += "<button type='submit'>&#10003; Speichern</button>";
+    html += "</form></body></html>";
+
+    server.send(200, "text/html", html);
+}
+
+void handleConfigSave() {
+    regenWarnungEnabled  = server.hasArg("regenWarn")  && server.arg("regenWarn")  == "1";
+    pollenWarnungEnabled = server.hasArg("pollenWarn") && server.arg("pollenWarn") == "1";
+    screen2Enabled       = server.hasArg("scr2")       && server.arg("scr2")       == "1";
+    screen3Enabled       = server.hasArg("scr3")       && server.arg("scr3")       == "1";
+    screen4Enabled       = server.hasArg("scr4")       && server.arg("scr4")       == "1";
+    screen5Enabled       = server.hasArg("scr5")       && server.arg("scr5")       == "1";
+    pollenSchwellwert    = server.hasArg("pollenThresh") ? server.arg("pollenThresh").toInt() : 30;
+    dimTimeoutMin        = server.hasArg("dimTime")      ? server.arg("dimTime").toInt()      : 3;
+
+    // Dimm-ms neu berechnen
+    dimTimeoutMs = (dimTimeoutMin <= 0) ? 0 : (unsigned long)dimTimeoutMin * 60UL * 1000UL;
+
+    // In Flash speichern
+    preferences.putBool("regenWarn",   regenWarnungEnabled);
+    preferences.putBool("pollenWarn",  pollenWarnungEnabled);
+    preferences.putBool("scr2",        screen2Enabled);
+    preferences.putBool("scr3",        screen3Enabled);
+    preferences.putBool("scr4",        screen4Enabled);
+    preferences.putBool("scr5",        screen5Enabled);
+    preferences.putInt("pollenThresh", pollenSchwellwert);
+    preferences.putInt("dimTime",      dimTimeoutMin);
+
+    Serial.println("Config gespeichert.");
+
+    // Antwort + Redirect zurück zur Config-Seite
+    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+    html += "<meta http-equiv='refresh' content='2;url=/config'>";
+    html += "<style>body{font-family:Arial;background:#0d1117;color:#e6edf3;text-align:center;padding:60px;}</style></head><body>";
+    html += "<h2>&#10003; Einstellungen gespeichert!</h2><p>Weiterleitung...</p></body></html>";
+    server.send(200, "text/html", html);
 }

@@ -58,14 +58,16 @@ SquareLine Studio generiert bei jedem Export einen `#error`-Check für
 
 | Screen | Inhalt | currentScreen |
 |---|---|---|
-| ScreenBoot | Boot-Screen mit Ladebalken | – |
+| ScreenBoot | Boot-Screen mit Ladebalken + IP-Anzeige | – |
 | Screen1 | Hauptscreen: Temp, Uhrzeit, Icon, Wind, Windrichtung | 1 |
 | Screen4 | 3-Stunden-Forecast mit Icons + Temps | 4 |
 | Screen2 | Luftfeuchtigkeit, Luftdruck, gefühlte Temp | 2 |
 | Screen3 | UV-Index, Sonnenaufgang, Sonnenuntergang | 3 |
+| ScreenPollen | Pollenbelastung alle 5 Arten | 5 |
 | uiScreenWarnung | Regen-Warnung, blinkend rot | 99 |
+| uiScreenWarnungPollen | Pollen-Warnung, blinkend orange | 98 |
 
-**Touch-Reihenfolge:** 1 → 4 → 2 → 3 → zurück zu 1
+**Touch-Reihenfolge:** 1 → 4 → 2 → 3 → 5 → zurück zu 1 (deaktivierte Screens werden übersprungen)
 
 ---
 
@@ -149,9 +151,21 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 
 ### Display-Dimmen
 - Normal: 80% Helligkeit (PWM 204/255)
-- Timeout: 3 Minuten Inaktivität → 20% (PWM 51/255)
+- Timeout: konfigurierbar (0=Aus / 1 / 3 / 5 / 10 Min), Standard 3 Min → 20%
 - Aufwecken: Touch-Taste → erste Betätigung nur aufhellen, kein Screen-Wechsel
 - Pin: GPIO 5, PWM via `ledcAttach()` (ESP32 Arduino Core 3.x API)
+
+### Web-Konfiguration
+- Erreichbar unter `http://wettercube.local` (mDNS) oder direkt per IP
+- IP wird nach WLAN-Connect 5 Sekunden auf dem Boot-Screen angezeigt
+- Konfigurierbare Optionen:
+  - Regen-Warnung ein/aus
+  - Pollen-Warnung ein/aus
+  - Pollen-Schwellwert: Mäßig (>10) / Hoch (>30) / Sehr hoch (>100)
+  - Screens 2–5 einzeln aktivieren/deaktivieren
+  - Dimm-Timeout: Aus / 1 / 3 / 5 / 10 Minuten
+- Einstellungen werden in Preferences (Flash) gespeichert → bleiben nach Neustart
+- Config-Server läuft auf Port 80 im Normalbetrieb (separater Pfad vom Setup-Portal)
 
 ### Uhrzeit & Datum (`updateClock()`)
 - NTP: `europe.pool.ntp.org`
@@ -188,7 +202,8 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.3.1 | Bugfix: Forecast-Überlauf nach 23:00 (forecast_days=2, Zeit aus API-Array) |
 | 1.4.0 | Pollen-Screen mit Open-Meteo Air Quality API |
 | 1.4.1 | Pollen-Warnscreen (blinkend orange, Touch-Quittierung) |
+| 1.5.0 | Web-Konfiguration (mDNS, IP-Anzeige Boot-Screen, Config-UI) |
 
 ---
 
-*Zuletzt aktualisiert: Juni 2025*
+*Zuletzt aktualisiert: Juni 2026*
