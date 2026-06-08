@@ -139,7 +139,7 @@ Die enthaltenen Wetter-Icons unterliegen der **CC BY-SA 4.0**-Lizenz
 (siehe [CREDITS.md](CREDITS.md)).
 
 
-# ☁️ WeatherCube
+# ☁️ WetterCube
 
 A compact Wi-Fi weather station based on the ESP32-C3 Super Mini, displaying current weather data on a 1.54" color display (ST7789, 240×240 px).
 
@@ -182,7 +182,7 @@ https://jppeterson-lab.github.io/wettercube/
 
 ### Initial Setup After Flashing
 
-1. The cube creates a Wi-Fi network called WeatherCube-Setup
+1. The cube creates a Wi-Fi network called WetterCube-Setup
 2. Connect to it and open 192.168.4.1 in your browser
 3. Enter your Wi-Fi name, password, and location → the cube connects and immediately starts displaying weather data
 
@@ -198,7 +198,7 @@ There are two options:
 
 Option 1 – mDNS (Recommended)
 
-text http://weathercube.local 
+text http://wettercube.local 
 
 Works directly on macOS, iPhone, Android, and Windows 11.
 
@@ -251,7 +251,7 @@ All settings are stored permanently in flash memory and remain available after r
 | ArduinoJson | JSON Parsing |
 | WiFi / HTTPClient / WebServer | Arduino ESP32 Core |
 | Preferences | Store Wi-Fi credentials & settings in flash memory |
-| ESPmDNS | Access via weathercube.local |
+| ESPmDNS | Access via wettercube.local |
 
 ---
 
