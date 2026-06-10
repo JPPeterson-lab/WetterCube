@@ -3,7 +3,7 @@
 Eine kompakte WLAN-Wetterstation auf Basis des **ESP32-C3 Super Mini**, die aktuelle
 Wetterdaten auf einem 1,54"-Farbdisplay (ST7789, 240×240 px) anzeigt.
 Dies ist mein erstes eigenes Hardware-Projekt von Grund auf selbst gebaut und mit KI Hilfe programmiert.
-DAs Projekt ist aktuell nur in Deutscher Sprache verfügbar, eine portierung in englisch ist geplant für Q3/26
+Das Projekt ist aktuell nur in Deutscher Sprache verfügbar, eine Portierung in Englisch ist geplant für Q3/26.
 
 Die Wetterdaten kommen kostenlos von [Open-Meteo](https://open-meteo.com) –
 kein API-Key nötig.
@@ -17,15 +17,24 @@ kein API-Key nötig.
 - **Windgeschwindigkeit** (km/h)
 - **Wetter-Icons** nach WMO-Code (klar, bewölkt, Regen, Schnee, Gewitter, Nebel)
 - **Uhrzeit & Datum** per NTP (Zeitzone Europa/Berlin)
-- **Pollenanzeige** für Birke, Graeser, Erle, Beifuß und Ambrosia
+- **Pollenanzeige** für Birke, Gräser, Erle, Beifuß und Ambrosia
 - **Screen 2:** 3 Stunden Wetter Forecast
 - **Screen 3:** Wind, Luftdruck, gefühlte Temperatur
 - **Screen 4:** UV-Index (Max), Sonnenaufgang & Sonnenuntergang
+- **Touch-Taste** TTP223 kapazitiver Touch-Sensor zum Durchschalten der Screens und Quittieren von Warnungen
 - **Captive-Portal-Setup:** WLAN + Standort bequem per Browser einstellen
-- **Regen-Warnung** Roter Screen blinkt 60 Min bevor der angesagte Regen eintreten soll, wird durch Touch berührung quittiert
-- **Pollen-Warnscreen** Roter Screen blinkt bei Belastung Hoch (>30) oder Sehr hoch (>100), wird durch Touch berührung quittiert oder restettet sich selbst bei Belastung <30
-- **Automatisches Dimmen** Nach 3 Min automatisches Dimmen bis die Touch Funktion genutzt wird
+- **Regen-Warnung** Roter Screen blinkt 60 Min bevor der angesagte Regen eintreten soll, wird durch Touch-Berührung quittiert
+- **Pollen-Warnscreen** Orangener Screen blinkt bei Belastung Hoch (>30) oder Sehr hoch (>100), wird durch Touch-Berührung quittiert oder setzt sich selbst zurück bei Belastung <30
+- **Automatisches Dimmen** Nach 3 Min automatisches Dimmen bis die Touch-Funktion genutzt wird
 - **Web-Konfiguration** Einstellungen bequem per Browser anpassen – kein Flashen nötig (siehe unten)
+
+---
+
+## 🎬 Showcase
+
+<video src="https://github.com/user-attachments/assets/ee37fd90-d35f-4771-976b-9f5b130c3df7" controls width="460"></video>
+
+<img src="https://github.com/user-attachments/assets/83afa5cc-405c-47f4-8ed1-395f43120ae1" width="460" alt="WetterCube in verschiedenen Designfarben">
 
 ---
 
@@ -51,6 +60,16 @@ kein API-Key nötig.
 
 ---
 
+## 🏠 Gehäuse
+
+Als Gehäuse empfehle ich den großartigen Cube von **Keralots** zu nutzen, welchen ihr in der Bambu Makerworld findet:
+
+👉 [Simple Print Monitor – ST7789 1.54" Display Case](https://makerworld.com/de/models/2501721-simple-print-monitor-st7789-1-54-display-case#profileId-2750174)
+
+Schaut euch auch seine weiteren Projekte an: [github.com/Keralots](https://github.com/Keralots)
+
+---
+
 ## ⚡ Web-Installer (kein Arduino IDE nötig)
 
 Die Firmware lässt sich direkt im Browser flashen – ganz ohne
@@ -58,7 +77,7 @@ Entwicklungsumgebung:
 
 **👉 [WetterCube Web-Installer öffnen](https://jppeterson-lab.github.io/wettercube/)**
 
-> Funktioniert nur in **Google Chrome** oder **Microsoft Edge** (WebSerial API). Der Anleitung folgen dei auf dem Monitor erscheint. Das flashen ist nur einmalig nötig. Bei Updates kann der Vorgang wiederholt werden...sowie wenn sich das WLAN Netz bzw. der Zugang ändert oder der Ort von welchem das Wetter angezeigt werden soll.
+> Funktioniert nur in **Google Chrome** oder **Microsoft Edge** (WebSerial API). Der Anleitung folgen, die auf dem Monitor erscheint. Das Flashen ist nur einmalig nötig. Bei Updates kann der Vorgang wiederholt werden – sowie wenn sich das WLAN-Netz bzw. der Zugang ändert oder der Ort, von welchem das Wetter angezeigt werden soll.
 
 ### Einrichtung nach dem Flashen
 
@@ -126,6 +145,10 @@ Alle Einstellungen werden dauerhaft im Flash gespeichert und bleiben nach einem 
 
 > Display: **ST7789** 1,54" · 240×240 px · SPI
 
+### Kabeldiagramm
+
+<img src="https://github.com/user-attachments/assets/ef40fa90-2510-46f7-98e0-1fd44cf1b384" width="460" alt="Kabeldiagramm WetterCube">
+
 ---
 
 ## 🛠 Verwendete Bibliotheken
@@ -143,10 +166,11 @@ Alle Einstellungen werden dauerhaft im Flash gespeichert und bleiben nach einem 
 
 ## 🙏 Credits
 
-| Ressource | Urheber | Lizenz |
+| Ressource | Urheber | Lizenz / Link |
 |---|---|---|
 | Wetter-Icons | [Dovora Weather Icons](https://www.dovora.com/resources/weather-icons/) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 | Wetterdaten | [Open-Meteo](https://open-meteo.com) | Open-Meteo API (kostenlos) |
+| Gehäuse-Design | [Keralots](https://github.com/Keralots) | [Bambu Makerworld](https://makerworld.com/de/models/2501721-simple-print-monitor-st7789-1-54-display-case#profileId-2750174) |
 
 Weitere Details in [CREDITS.md](CREDITS.md).
 
@@ -161,101 +185,110 @@ Die enthaltenen Wetter-Icons unterliegen der **CC BY-SA 4.0**-Lizenz
 (siehe [CREDITS.md](CREDITS.md)).
 
 
-# ☁️ WetterCube
+---
+---
 
-A compact Wi-Fi weather station based on the ESP32-C3 Super Mini, displaying current weather data on a 1.54" color display (ST7789, 240×240 px).
+# ☁️ WetterCube (English)
+
+A compact Wi-Fi weather station based on the **ESP32-C3 Super Mini**, displaying current weather data on a 1.54" color display (ST7789, 240×240 px).
 
 This is my first self-built hardware project, designed from scratch and programmed with the help of AI.
 
 The project is currently available in German only. An English version is planned for Q3 2026.
 
-Weather data is provided free of charge by Open-Meteo – no API key required.
+Weather data is provided free of charge by [Open-Meteo](https://open-meteo.com) – no API key required.
 
 ---
 
 ## ✨ Features
 
-- Current temperature (actual & feels-like temperature)
-- Humidity & air pressure
-- Wind speed (km/h)
-- Weather icons based on WMO weather codes (clear, cloudy, rain, snow, thunderstorms, fog)
-- Time & date via NTP (Europe/Berlin timezone)
-- Pollen information for birch, grasses, alder, mugwort, and ragweed
-- Screen 2: 3-hour weather forecast
-- Screen 3: Wind, air pressure, and feels-like temperature
-- Screen 4: Maximum UV index, sunrise & sunset
-- Captive Portal Setup: Configure Wi-Fi and location conveniently through a web browser
-- Rain Warning: A red warning screen flashes up to 60 minutes before forecasted rainfall. The alert can be acknowledged via touch input.
-- Pollen Warning Screen: A red warning screen flashes when pollen levels are High (>30) or Very High (>100). It can be acknowledged via touch input or automatically clears when levels drop below 30.
-- Automatic Dimming: The display automatically dims after 3 minutes of inactivity and wakes up when the touch button is used.
-- Web Configuration: Easily adjust settings through a browser – no reflashing required (see below).
+- **Current temperature** (actual & feels-like temperature)
+- **Humidity** & **air pressure**
+- **Wind speed** (km/h)
+- **Weather icons** based on WMO weather codes (clear, cloudy, rain, snow, thunderstorms, fog)
+- **Time & date** via NTP (Europe/Berlin timezone)
+- **Pollen display** for birch, grasses, alder, mugwort, and ragweed
+- **Screen 2:** 3-hour weather forecast
+- **Screen 3:** Wind, air pressure, and feels-like temperature
+- **Screen 4:** Maximum UV index, sunrise & sunset
+- **Touch button** TTP223 capacitive touch sensor for switching screens and acknowledging warnings
+- **Captive Portal Setup:** Configure Wi-Fi and location conveniently through a web browser
+- **Rain Warning:** A red warning screen flashes up to 60 minutes before forecasted rainfall – acknowledged via touch
+- **Pollen Warning:** An orange warning screen flashes when pollen levels are High (>30) or Very High (>100) – acknowledged via touch or resets automatically when levels drop
+- **Automatic Dimming:** Display dims after 3 minutes of inactivity, wakes on touch
+- **Web Configuration:** Adjust settings through a browser – no reflashing required (see below)
+
+---
+
+## 🏠 Case / Enclosure
+
+I recommend using the fantastic Cube enclosure by **Keralots**, available on Bambu Makerworld:
+
+👉 [Simple Print Monitor – ST7789 1.54" Display Case](https://makerworld.com/de/models/2501721-simple-print-monitor-st7789-1-54-display-case#profileId-2750174)
+
+Check out his other projects at: [github.com/Keralots](https://github.com/Keralots)
 
 ---
 
 ## ⚡ Web Installer (No Arduino IDE Required)
 
-The firmware can be flashed directly from your browser without installing any development tools:
+The firmware can be flashed directly from your browser:
 
-👉 Open the WeatherCube Web Installer
+**👉 [Open WetterCube Web Installer](https://jppeterson-lab.github.io/wettercube/)**
 
-https://jppeterson-lab.github.io/wettercube/
-
-> Works only in Google Chrome or Microsoft Edge (WebSerial API required). Follow the instructions shown on screen. Flashing is only required once. The process can be repeated for firmware updates, when changing Wi-Fi credentials, or when relocating the device to display weather for a different location.
+> Works only in **Google Chrome** or **Microsoft Edge** (WebSerial API). Follow the on-screen instructions. Flashing is only required once and can be repeated for updates or when changing Wi-Fi credentials or location.
 
 ### Initial Setup After Flashing
 
-1. The cube creates a Wi-Fi network called WetterCube-Setup
-2. Connect to it and open 192.168.4.1 in your browser
-3. Enter your Wi-Fi name, password, and location → the cube connects and immediately starts displaying weather data
+1. The cube creates a Wi-Fi network called **`WetterCube-Setup`**
+2. Connect to it and open `192.168.4.1` in your browser
+3. Enter your Wi-Fi name, password, and location → the cube connects and immediately displays weather data
 
 ---
 
 ## ⚙️ Web Configuration
 
-After the first startup, the cube connects to Wi-Fi and briefly displays its IP address on the screen. From that point onward, a small browser-based configuration interface becomes available – no reflashing or serial monitor required.
+After the first startup, the cube connects to Wi-Fi and briefly displays its IP address. A browser-based configuration interface is then available – no reflashing or serial monitor required.
 
 ### Accessing the Web Interface
 
-There are two options:
-
-Option 1 – mDNS (Recommended)
+**Option 1 – mDNS (recommended)**
 
 ```
-http://wettercube.local 
+http://wettercube.local
 ```
 
-Works directly on macOS, iPhone, Android, and Windows 11.
+Works on macOS, iPhone, Android, and Windows 11 out of the box.
+Older Windows versions require [Bonjour](https://support.apple.com/kb/DL999) (free from Apple).
 
-Older Windows versions require Bonjour (free from Apple).
+**Option 2 – IP Address**
 
-Option 2 – IP Address
-
-The IP address is displayed for 5 seconds after connecting to Wi-Fi, for example:
+The IP is displayed for **5 seconds** on the boot screen after connecting, e.g.:
 
 ```
-IP: 192.168.1.47 
+Connected!  IP: 192.168.1.47
 ```
 
-Simply enter this address into your browser. The IP address may change after a reboot. If that happens, restart the cube and note the new address.
+Enter this address in your browser. The IP may change after a reboot – just restart the cube and note the new address.
 
 ### Available Settings
 
 | Category | Setting |
-|-----------|-----------|
-| Warnings | Rain warning on/off |
+|---|---|
+| **Warnings** | Rain warning on/off |
 | | Pollen warning on/off |
 | | Pollen threshold: Moderate / High / Very High |
-| Screens | Enable or disable screens 2–5 individually |
-| Display | Dimming timeout: Off / 1 / 3 / 5 / 10 minutes |
+| **Screens** | Enable or disable screens 2–5 individually |
+| **Display** | Dimming timeout: Off / 1 / 3 / 5 / 10 minutes |
 
-All settings are stored permanently in flash memory and remain available after rebooting.
+All settings are stored permanently in flash memory.
 
 ---
 
 ## 🔌 Pin Assignment (ESP32-C3)
 
 | Function | GPIO |
-|-----------|------|
+|---|---|
 | TFT MOSI (SPI) | 20 |
 | TFT SCLK (SPI) | 21 |
 | TFT CS | 6 |
@@ -264,38 +297,37 @@ All settings are stored permanently in flash memory and remain available after r
 | TFT Backlight | 5 |
 | Touch Button (TTP223) | 3 |
 
-> Display: ST7789 · 1.54" · 240×240 px · SPI
+> Display: **ST7789** · 1.54" · 240×240 px · SPI
 
 ---
 
 ## 🛠 Libraries Used
 
 | Library | Purpose |
-|-----------|-----------|
-| LVGL 8.3 | GUI Framework |
-| Arduino_GFX_Library | Display Driver |
-| ArduinoJson | JSON Parsing |
+|---|---|
+| [LVGL 8.3](https://lvgl.io) | GUI Framework |
+| [Arduino_GFX_Library](https://github.com/moononournation/Arduino_GFX) | Display Driver |
+| [ArduinoJson](https://arduinojson.org) | JSON Parsing |
 | WiFi / HTTPClient / WebServer | Arduino ESP32 Core |
-| Preferences | Store Wi-Fi credentials & settings in flash memory |
-| ESPmDNS | Access via wettercube.local |
+| Preferences | Store Wi-Fi credentials & settings in flash |
+| ESPmDNS | Access via `wettercube.local` |
 
 ---
 
 ## 🙏 Credits
 
-| Resource | Author | License |
-|-----------|-----------|-----------|
-| Weather Icons | Dovora Weather Icons | CC BY-SA 4.0 |
-| Weather Data | Open-Meteo | Open-Meteo API (free) |
+| Resource | Author | License / Link |
+|---|---|---|
+| Weather Icons | [Dovora Weather Icons](https://www.dovora.com/resources/weather-icons/) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| Weather Data | [Open-Meteo](https://open-meteo.com) | Open-Meteo API (free) |
+| Case Design | [Keralots](https://github.com/Keralots) | [Bambu Makerworld](https://makerworld.com/de/models/2501721-simple-print-monitor-st7789-1-54-display-case#profileId-2750174) |
 
-See CREDITS.md for additional details.
+See [CREDITS.md](CREDITS.md) for additional details.
 
 ---
 
 ## 📄 License
 
-The source code of this project is licensed under the MIT License – free to use, modify, and redistribute.
+The source code is licensed under the **MIT License** – free to use, modify, and redistribute. See [LICENSE](LICENSE).
 
-For details, see LICENSE.
-
-The included weather icons are licensed under CC BY-SA 4.0 (see CREDITS.md)
+The included weather icons are licensed under **CC BY-SA 4.0** (see [CREDITS.md](CREDITS.md)).
