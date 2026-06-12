@@ -13,7 +13,7 @@
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.6.1"
+#define FIRMWARE_VERSION     "1.6.2"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/wettercube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/wettercube/firmware/firmware.bin"
 
@@ -395,7 +395,9 @@ void showBootScreen() {
     delay(5000);
     lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
     currentScreen = 1;
-    lv_timer_handler();
+    // Animation vollständig abwarten bevor HTTP-Calls starten
+    unsigned long animEnd = millis() + 600;
+    while (millis() < animEnd) { lv_timer_handler(); delay(5); }
 }
 
 // --- GEOCODING (Stadtname → Koordinaten) ---
@@ -553,8 +555,10 @@ void fetchWeather() {
             if (!regenKommt) regenWarnungBestaetigt = false; // Reset für nächste Warnung
             if (regenKommt && regenWarnungEnabled && !regenWarnungBestaetigt && !regenWarnungAktiv) {
                 regenWarnungAktiv = true;
-                lv_scr_load(ui_uiScreenWarnung);
-                currentScreen = 99;
+                if (ui_uiScreenWarnung != nullptr) {
+                    lv_scr_load(ui_uiScreenWarnung);
+                    currentScreen = 99;
+                }
             }
         }
 
@@ -649,10 +653,11 @@ void fetchPollen() {
             pollenWarnungBestaetigt = false; // Reset für nächste Warnung
         }
         if (warnText != "" && pollenWarnungEnabled && !pollenWarnungBestaetigt && !pollenWarnungAktiv) {
-            lv_label_set_text(uic_LabelPollenWarnArt, warnText.c_str());
             pollenWarnungAktiv = true;
             lv_scr_load(ui_uiScreenWarnungPollen);
             currentScreen = 98;
+            if (uic_LabelPollenWarnArt != nullptr)
+                lv_label_set_text(uic_LabelPollenWarnArt, warnText.c_str());
         }
     } else {
         Serial.printf("Pollen-Fehler: HTTP %d\n", httpCode);
