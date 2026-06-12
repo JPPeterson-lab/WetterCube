@@ -81,11 +81,16 @@ SquareLine Studio generiert bei jedem Export einen `#error`-Check für
 - Nach erfolgreicher Verbindung: 4 Sekunden stehen bleiben, dann Fade zu Screen 1
 - Bei Fehler: Meldung + Setup-Portal öffnen
 
-### WLAN & Captive Portal
-- SSID, Passwort, Standort werden im Flash gespeichert (Preferences)
-- Kein WLAN oder kein Standort → Access Point "WetterCube-Setup" + Webformular
-- Geocoding via Open-Meteo API (Stadtname → Koordinaten)
-- Koordinaten werden dauerhaft gespeichert
+### WLAN & Captive Portal (WiFiManager by tzapu)
+- Bibliothek: WiFiManager (tzapu) – in Arduino Library Manager verfügbar
+- Beim ersten Start oder wenn kein WLAN gespeichert: AP "WetterCube-Setup" öffnet sich automatisch
+- Captive Portal öffnet sich auf iOS/Android automatisch beim Verbinden mit dem AP
+- Custom Parameter im Portal: Standort (Stadtname) – wird in Preferences gespeichert
+- WLAN-Credentials werden von WiFiManager intern im Flash verwaltet (kein eigener Preferences-Key nötig)
+- Nach erfolgreichem Connect: direkt weiter, kein Neustart nötig
+- Timeout: 180 Sek → ESP.restart()
+- Reset der WLAN-Daten: `wm.resetSettings()` (z.B. bei langem Tastendruck aufrufbar)
+- Geocoding via Open-Meteo API (Stadtname → Koordinaten), Koordinaten dauerhaft in Preferences
 
 ### Wetter-Abruf (`fetchWeather()`)
 - Intervall: alle 15 Minuten
@@ -155,6 +160,18 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - Aufwecken: Touch-Taste → erste Betätigung nur aufhellen, kein Screen-Wechsel
 - Pin: GPIO 5, PWM via `ledcAttach()` (ESP32 Arduino Core 3.x API)
 
+### OTA-Update (ab v1.6.0)
+- Erreichbar unter `http://wettercube.local/update`
+- Button "Auf Updates prüfen" → Cube holt `docs/version.json` von GitHub Pages
+- Bei neuer Version: "Jetzt updaten" → lädt `firmware.bin` herunter, flasht sich selbst, startet neu
+- Kein USB nötig – funktioniert komplett über WLAN
+- `FIRMWARE_VERSION` im Code muss mit `docs/version.json` synchron sein
+- HTTPS-Download via `WiFiClientSecure` mit `setInsecure()`
+
+### Helligkeit (ab v1.6.0)
+- Slider 10–100% im Webinterface, Preferences-Key: `brightness`
+- Wird sofort angewendet ohne Neustart
+
 ### Web-Konfiguration
 - Erreichbar unter `http://wettercube.local` (mDNS) oder direkt per IP
 - IP wird nach WLAN-Connect 5 Sekunden auf dem Boot-Screen angezeigt
@@ -203,6 +220,8 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.4.0 | Pollen-Screen mit Open-Meteo Air Quality API |
 | 1.4.1 | Pollen-Warnscreen (blinkend orange, Touch-Quittierung) |
 | 1.5.0 | Web-Konfiguration (mDNS, IP-Anzeige Boot-Screen, Config-UI) |
+| 1.5.1 | WiFiManager (tzapu) ersetzt eigenes Captive Portal |
+| 1.6.0 | OTA-Update via GitHub Pages, Helligkeitsregler, WiFiManager-Portal auf Deutsch |
 
 ---
 

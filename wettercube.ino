@@ -8,21 +8,25 @@
 #include <WebServer.h>
 #include <Preferences.h>
 #include <ESPmDNS.h>
+#include <WiFiManager.h>
+#include <WiFiClientSecure.h>
+#include <Update.h>
 #include <ui.h>
+
+#define FIRMWARE_VERSION     "1.5.1"
+#define OTA_VERSION_URL      "https://jppeterson-lab.github.io/wettercube/version.json"
+#define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/wettercube/firmware/firmware.bin"
 
 // --- SPEICHER & WEB-SERVER ---
 Preferences preferences;
 WebServer server(80);
 
-String ssid      = "";
-String password  = "";
-String location  = "";   // Stadtname (nur für Anzeige gespeichert)
+String location  = "";
 float  latitude  = 0.0;
 float  longitude = 0.0;
 
 unsigned long lastWeatherUpdate = 0;
 const unsigned long weatherInterval = 900000; // 15 Minuten
-bool setupMode = false;
 
 // --- HARDWARE BUTTON (TTP223) ---
 #define TOUCH_PIN 3
@@ -42,14 +46,12 @@ unsigned long lastPollenBlink = 0;
 bool pollenBlinkState        = false;
 
 // --- DISPLAY DIMMEN ---
-#define BL_CHANNEL     0
 #define BL_FREQ        5000
-#define BL_RESOLUTION  8          // 8-bit → 0-255
-#define BL_BRIGHT      204        // 80%
-#define BL_DIM         51         // 20%
+#define BL_RESOLUTION  8
+#define BL_DIM         51         // 20% – fester Dimm-Wert
 bool isDimmed = false;
 unsigned long lastActivityTime = 0;
-unsigned long dimTimeoutMs = 180000UL; // Standard: 3 Minuten (überschreibbar per Webconfig)
+unsigned long dimTimeoutMs = 180000UL;
 
 // --- WEBCONFIG-EINSTELLUNGEN ---
 bool regenWarnungEnabled  = true;
@@ -58,8 +60,11 @@ bool screen2Enabled       = true;
 bool screen3Enabled       = true;
 bool screen4Enabled       = true;
 bool screen5Enabled       = true;
-int  pollenSchwellwert    = 30;   // >30 = Hoch, >100 = Sehr hoch
-int  dimTimeoutMin        = 3;    // 0=Aus, 1, 3, 5, 10 Minuten
+int  pollenSchwellwert    = 30;
+int  dimTimeoutMin        = 3;
+int  brightnessPercent    = 80;   // 10–100%, konfigurierbar per Webinterface
+
+int getBrightPWM() { return (brightnessPercent * 255) / 100; }
 
 // --- DISPLAY HARDWARE PINS ---
 #define TFT_MOSI 20
@@ -95,15 +100,14 @@ void setTempColor(lv_obj_t* label, float temp);
 void fetchPollen();
 void setPollenLabel(lv_obj_t* label, float value);
 void updateWeatherIcon(int wmoCode);
-void startSetupPortal();
-void drawSetupScreen();
-void handleRoot();
-void handleSave();
 void showBootScreen();
 void loadConfig();
 void startConfigServer();
 void handleConfig();
 void handleConfigSave();
+void handleOTAPage();
+void handleOTACheck();
+void handleOTAInstall();
 
 void setup() {
     Serial.begin(115200);
@@ -112,7 +116,7 @@ void setup() {
 
     pinMode(TOUCH_PIN, INPUT);
     ledcAttach(TFT_BL, BL_FREQ, BL_RESOLUTION);
-    ledcWrite(TFT_BL, BL_BRIGHT);
+    ledcWrite(TFT_BL, getBrightPWM());
     lastActivityTime = millis();
 
     gfx->begin();
@@ -132,44 +136,22 @@ void setup() {
 
     // Daten aus dem Flash-Speicher laden
     preferences.begin("wettercube", false);
-    ssid      = preferences.getString("ssid", "");
-    password  = preferences.getString("password", "");
     location  = preferences.getString("location", "");
     latitude  = preferences.getFloat("lat", 0.0);
     longitude = preferences.getFloat("lon", 0.0);
     loadConfig();
 
-    // Setup-Modus wenn kein WLAN oder kein Standort gespeichert
-    if (ssid.length() < 4 || location.length() < 2) {
-        setupMode = true;
-        startSetupPortal();
-        return;
-    }
+    showBootScreen(); // verbindet WLAN via WiFiManager, startet mDNS + Config-Server
 
-    showBootScreen();
-    if (setupMode) return;
-
-    Serial.println(" Verbunden!");
     configTzTime("CET-1CEST,M3.5.0,M10.5.0/3", "europe.pool.ntp.org");
-
-    // Falls noch keine Koordinaten gespeichert, Geocoding durchführen
-    if (latitude == 0.0 && longitude == 0.0) {
-        geocodeLocation(location);
-    }
-
+    if (latitude == 0.0 && longitude == 0.0) geocodeLocation(location);
     fetchWeather();
     fetchPollen();
 }
 
 void loop() {
-    if (setupMode) {
-        server.handleClient();
-        delay(20);
-        return;
-    }
-
     lv_timer_handler();
-    server.handleClient(); // Config-Webserver im Normalbetrieb
+    server.handleClient(); // Config-Webserver
     delay(5);
 
     checkTouchButton();
@@ -217,7 +199,7 @@ void checkTouchButton() {
     if (digitalRead(TOUCH_PIN) == HIGH) {
         lastActivityTime = millis();
         if (isDimmed) {
-            ledcWrite(TFT_BL, BL_BRIGHT);
+            ledcWrite(TFT_BL, getBrightPWM());
             isDimmed = false;
             return;
         }
@@ -268,63 +250,8 @@ void checkTouchButton() {
     }
 }
 
-// --- SETUP PORTAL ---
-
-void startSetupPortal() {
-    WiFi.softAP("WetterCube-Setup");
-    drawSetupScreen();
-    server.on("/", handleRoot);
-    server.on("/save", handleSave);
-    server.begin();
-}
-
-void drawSetupScreen() {
-    gfx->fillScreen(0x0000);
-    gfx->setTextColor(0x05ED); gfx->setTextSize(2); gfx->setCursor(20, 25); gfx->println("WETTER-CUBE");
-    gfx->drawFastHLine(20, 50, 200, 0x31A6);
-    gfx->setTextColor(0xFFFF); gfx->setTextSize(2); gfx->setCursor(20, 70); gfx->println("1. Verbinde WLAN:");
-    gfx->setCursor(20, 100); gfx->setTextColor(0x07E0); gfx->println("WetterCube-Setup");
-    gfx->setTextColor(0xFFFF); gfx->setCursor(20, 145); gfx->println("2. Oeffne IP:");
-    gfx->setCursor(20, 175); gfx->setTextColor(0x05ED); gfx->println("192.168.4.1");
-}
-
-void handleRoot() {
-    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-    html += "<style>body{font-family:Arial; background:#121212; color:#fff; text-align:center; padding:20px;}";
-    html += ".card{background:#1e1e1e; padding:30px; border-radius:15px; display:inline-block; text-align:left; box-shadow: 0 4px 10px rgba(0,0,0,0.5); width:90%; max-width:400px;}";
-    html += "input[type=text], input[type=password]{width:100%; padding:10px; margin:10px 0 20px 0; border-radius:5px; border:1px solid #333; background:#2a2a2a; color:#fff; box-sizing:border-box;}";
-    html += "input[type=submit]{background:#00adb5; color:#fff; border:none; padding:12px 20px; border-radius:5px; cursor:pointer; width:100%; font-size:16px;}";
-    html += "input[type=submit]:hover{background:#007a80;}</style></head><body>";
-    html += "<h2>WetterCube Einrichtung</h2>";
-    html += "<div class='card'><form action='/save' method='POST'>";
-    html += "<label>WLAN Name (SSID):</label><input type='text' name='ssid' placeholder='z.B. FRITZ!Box 7590'>";
-    html += "<label>WLAN Passwort:</label><input type='password' name='password'>";
-    html += "<label>Dein Standort:</label><input type='text' name='location' placeholder='z.B. Berlin oder Hamburg'>";
-    html += "<small style='color:#aaa;display:block;margin-top:-15px;margin-bottom:20px;'>Stadtname auf Englisch oder Deutsch</small>";
-    html += "<input type='submit' value='Speichern & Verbinden'>";
-    html += "</form></div></body></html>";
-    server.send(200, "text/html", html);
-}
-
-void handleSave() {
-    if (server.hasArg("ssid")) {
-        preferences.putString("ssid",     server.arg("ssid"));
-        preferences.putString("password", server.arg("password"));
-        preferences.putString("location", server.arg("location"));
-        // Koordinaten zurücksetzen, damit beim nächsten Start Geocoding läuft
-        preferences.putFloat("lat", 0.0);
-        preferences.putFloat("lon", 0.0);
-
-        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'></head>";
-        html += "<body style='font-family:Arial; background:#121212; color:#fff; text-align:center; padding:50px;'>";
-        html += "<h3>Gespeichert! Der Cube startet jetzt neu...</h3></body></html>";
-        server.send(200, "text/html", html);
-
-        delay(2000);
-        preferences.end();
-        ESP.restart();
-    }
-}
+// Setup-Portal entfällt – WLAN-Einrichtung erfolgt über WiFiManager (tzapu)
+// Reset: wm.resetSettings() z.B. bei langem Tastendruck aufrufen
 
 // --- BOOT SCREEN ---
 
@@ -334,41 +261,98 @@ void showBootScreen() {
     lv_label_set_text(uic_LabelStatus, "Verbinde mit WLAN...");
     lv_timer_handler();
 
-    Serial.print("Verbinde mit WLAN: "); Serial.println(ssid);
-    WiFi.begin(ssid.c_str(), password.c_str());
+    String savedLocation = preferences.getString("location", "");
+    char locationBuf[64];
+    savedLocation.toCharArray(locationBuf, sizeof(locationBuf));
 
-    int maxVersuche = 20;
-    for (int i = 0; i <= maxVersuche; i++) {
-        if (WiFi.status() == WL_CONNECTED) break;
-        delay(500);
-        Serial.print(".");
-        int progress = (i * 100) / maxVersuche;
-        lv_bar_set_value(uic_BarWifi, progress, LV_ANIM_ON);
+    WiFiManager wm;
+    wm.setConfigPortalTimeout(180);
+    wm.setTitle("WetterCube");
+
+    // Deutsches Styling + Button-Übersetzung per JS
+    wm.setCustomHeadElement(
+        "<style>"
+        "*{color:#e6edf3;}"
+        "body{font-family:Arial,sans-serif;background:#0d1117;}"
+        "h1{color:#58a6ff;} h3{color:#8b949e;font-weight:normal;}"
+        "a{color:#58a6ff;}"
+        "li,li a,li label{color:#e6edf3 !important;}"
+        ".wrap{background:#0d1117;}"
+        "input,textarea{background:#161b22 !important;color:#e6edf3 !important;border:1px solid #30363d;border-radius:6px;padding:8px;width:100%;box-sizing:border-box;}"
+        "input[type=submit],button{background:#238636 !important;color:#fff !important;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%;font-size:1em;margin-top:8px;}"
+        ".msg,.q{background:#161b22 !important;border:1px solid #30363d;border-radius:8px;padding:12px;color:#e6edf3 !important;}"
+        "label{color:#e6edf3 !important;}"
+        "</style>"
+        "<script>window.addEventListener('load',function(){"
+        "  document.querySelectorAll('input[type=submit]').forEach(function(b){"
+        "    if(b.value==='Configure WiFi'||b.value==='Save')b.value='Speichern';"
+        "    if(b.value==='Scan')b.value='Netzwerke suchen';"
+        "  });"
+        "  document.querySelectorAll('a').forEach(function(a){"
+        "    if(a.textContent==='Configure WiFi')a.textContent='WLAN einrichten';"
+        "    if(a.textContent==='Info')a.textContent='Info';"
+        "    if(a.textContent==='Update')a.textContent='Update';"
+        "    if(a.textContent==='Exit Portal')a.textContent='Portal beenden';"
+        "  });"
+        "});</script>"
+    );
+
+    // Hinweistext im Portal
+    wm.setCustomMenuHTML(
+        "<p style='color:#8b949e;text-align:center;padding:0 16px;'>"
+        "Gib deine WLAN-Zugangsdaten und deinen <b style='color:#58a6ff;'>Standort</b> ein.<br>"
+        "<small>Stadtname auf Deutsch oder Englisch, z.B. <i>Berlin</i></small></p>"
+    );
+
+    // Custom Parameter: Standort
+    WiFiManagerParameter custom_location("location", "Standort (z.B. Berlin)", locationBuf, 60);
+    wm.addParameter(&custom_location);
+
+    // Anzeige wenn Portal geöffnet wird
+    wm.setAPCallback([](WiFiManager*) {
+        lv_label_set_text(uic_LabelStatus, "Portal: WetterCube-Setup");
+        lv_bar_set_value(uic_BarWifi, 30, LV_ANIM_ON);
         lv_timer_handler();
-    }
+    });
 
-    if (WiFi.status() == WL_CONNECTED) {
+    lv_bar_set_value(uic_BarWifi, 10, LV_ANIM_ON);
+    lv_timer_handler();
+
+    if (wm.autoConnect("WetterCube-Setup")) {
         lv_bar_set_value(uic_BarWifi, 100, LV_ANIM_ON);
-        // IP-Adresse anzeigen
+
+        // Standort aus Parameter lesen und bei Änderung speichern
+        String newLocation = String(custom_location.getValue());
+        newLocation.trim();
+        if (newLocation.length() >= 2) {
+            bool locationChanged = (newLocation != savedLocation);
+            location = newLocation;
+            preferences.putString("location", location);
+            if (locationChanged || (latitude == 0.0 && longitude == 0.0)) {
+                latitude = 0.0; longitude = 0.0;
+                preferences.putFloat("lat", 0.0);
+                preferences.putFloat("lon", 0.0);
+            }
+        }
+
+        // IP anzeigen
         String ipStr = "Verbunden!  IP: " + WiFi.localIP().toString();
         lv_label_set_text(uic_LabelStatus, ipStr.c_str());
         lv_timer_handler();
-        // mDNS starten → erreichbar als http://wettercube.local
-        if (MDNS.begin("wettercube")) {
-            Serial.println("mDNS: http://wettercube.local");
-        }
-        // Config-Webserver starten
+
+        if (MDNS.begin("wettercube")) Serial.println("mDNS: http://wettercube.local");
         startConfigServer();
-        delay(5000); // 5 Sekunden IP anzeigen
+
+        delay(5000);
         lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
         currentScreen = 1;
         lv_timer_handler();
     } else {
-        lv_label_set_text(uic_LabelStatus, "Kein WLAN – Setup wird geoeffnet...");
+        // Timeout → Neustart
+        lv_label_set_text(uic_LabelStatus, "Timeout - Neustart...");
         lv_timer_handler();
         delay(2000);
-        setupMode = true;
-        startSetupPortal();
+        ESP.restart();
     }
 }
 
@@ -706,16 +690,11 @@ void loadConfig() {
     screen5Enabled       = preferences.getBool("scr5",        true);
     pollenSchwellwert    = preferences.getInt("pollenThresh", 30);
     dimTimeoutMin        = preferences.getInt("dimTime",      3);
-    // Minuten → Millisekunden umrechnen (0 = Dimmen aus)
-    if (dimTimeoutMin <= 0) {
-        dimTimeoutMs = 0;
-    } else {
-        dimTimeoutMs = (unsigned long)dimTimeoutMin * 60UL * 1000UL;
-    }
-    Serial.printf("Config geladen: regenWarn=%d pollenWarn=%d scr2=%d scr3=%d scr4=%d scr5=%d pollenThresh=%d dimTime=%dmin\n",
-        regenWarnungEnabled, pollenWarnungEnabled,
-        screen2Enabled, screen3Enabled, screen4Enabled, screen5Enabled,
-        pollenSchwellwert, dimTimeoutMin);
+    brightnessPercent    = preferences.getInt("brightness",   80);
+    brightnessPercent    = constrain(brightnessPercent, 10, 100);
+    dimTimeoutMs = (dimTimeoutMin <= 0) ? 0 : (unsigned long)dimTimeoutMin * 60UL * 1000UL;
+    Serial.printf("Config: regenWarn=%d pollenWarn=%d brightness=%d%% dimTime=%dmin\n",
+        regenWarnungEnabled, pollenWarnungEnabled, brightnessPercent, dimTimeoutMin);
 }
 
 // =============================================================================
@@ -723,11 +702,14 @@ void loadConfig() {
 // =============================================================================
 
 void startConfigServer() {
-    server.on("/",            handleConfig);
-    server.on("/config",      handleConfig);
-    server.on("/config/save", handleConfigSave);
+    server.on("/",              handleConfig);
+    server.on("/config",        handleConfig);
+    server.on("/config/save",   handleConfigSave);
+    server.on("/update",        HTTP_GET, handleOTAPage);
+    server.on("/update/check",  HTTP_GET, handleOTACheck);
+    server.on("/update/install",HTTP_GET, handleOTAInstall);
     server.begin();
-    Serial.println("Config-Server gestartet auf Port 80");
+    Serial.println("Config-Server: http://wettercube.local  |  /update fuer OTA");
 }
 
 void handleConfig() {
@@ -789,6 +771,13 @@ void handleConfig() {
 
     // --- Display ---
     html += "<div class='card'><h2>&#128261; Display</h2>";
+    html += "<div class='row'><label>Helligkeit</label>";
+    html += "<div style='display:flex;align-items:center;gap:10px;'>";
+    html += "<input type='range' name='brightness' min='10' max='100' value='" + String(brightnessPercent) + "' ";
+    html += "style='width:130px;accent-color:#58a6ff;' ";
+    html += "oninput='this.nextElementSibling.textContent=this.value+\"%\"'>";
+    html += "<span style='min-width:38px;color:#58a6ff;font-weight:bold;'>" + String(brightnessPercent) + "%</span>";
+    html += "</div></div>";
     html += "<div class='row'><label>Dimmen nach</label>";
     html += "<select name='dimTime'>";
     html += "<option value='0'"  + String(dimTimeoutMin == 0  ? " selected" : "") + ">Aus</option>";
@@ -797,6 +786,13 @@ void handleConfig() {
     html += "<option value='5'"  + String(dimTimeoutMin == 5  ? " selected" : "") + ">5 Minuten</option>";
     html += "<option value='10'" + String(dimTimeoutMin == 10 ? " selected" : "") + ">10 Minuten</option>";
     html += "</select></div></div>";
+
+    // --- Firmware Update ---
+    html += "<div class='card'><h2>&#128257; Firmware</h2>";
+    html += "<div class='row'><label>Installierte Version</label><span style='color:#58a6ff;font-weight:bold;'>" FIRMWARE_VERSION "</span></div>";
+    html += "<div style='margin-top:12px;'>";
+    html += "<a href='/update' style='display:block;background:#1f6feb;color:#fff;text-align:center;padding:10px;border-radius:6px;text-decoration:none;font-size:.95em;'>&#128257; Auf Updates pr&uuml;fen</a>";
+    html += "</div></div>";
 
     html += "<button type='submit'>&#10003; Speichern</button>";
     html += "</form></body></html>";
@@ -813,9 +809,13 @@ void handleConfigSave() {
     screen5Enabled       = server.hasArg("scr5")       && server.arg("scr5")       == "1";
     pollenSchwellwert    = server.hasArg("pollenThresh") ? server.arg("pollenThresh").toInt() : 30;
     dimTimeoutMin        = server.hasArg("dimTime")      ? server.arg("dimTime").toInt()      : 3;
+    brightnessPercent    = server.hasArg("brightness")   ? server.arg("brightness").toInt()   : 80;
+    brightnessPercent    = constrain(brightnessPercent, 10, 100);
 
-    // Dimm-ms neu berechnen
     dimTimeoutMs = (dimTimeoutMin <= 0) ? 0 : (unsigned long)dimTimeoutMin * 60UL * 1000UL;
+
+    // Helligkeit sofort anwenden (nur wenn nicht gedimmt)
+    if (!isDimmed) ledcWrite(TFT_BL, getBrightPWM());
 
     // In Flash speichern
     preferences.putBool("regenWarn",   regenWarnungEnabled);
@@ -826,6 +826,7 @@ void handleConfigSave() {
     preferences.putBool("scr5",        screen5Enabled);
     preferences.putInt("pollenThresh", pollenSchwellwert);
     preferences.putInt("dimTime",      dimTimeoutMin);
+    preferences.putInt("brightness",   brightnessPercent);
 
     Serial.println("Config gespeichert.");
 
@@ -835,4 +836,127 @@ void handleConfigSave() {
     html += "<style>body{font-family:Arial;background:#0d1117;color:#e6edf3;text-align:center;padding:60px;}</style></head><body>";
     html += "<h2>&#10003; Einstellungen gespeichert!</h2><p>Weiterleitung...</p></body></html>";
     server.send(200, "text/html", html);
+}
+
+// =============================================================================
+// --- OTA UPDATE (GitHub Pages) ---
+// =============================================================================
+
+void handleOTAPage() {
+    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+    html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
+    html += "<title>WetterCube Update</title>";
+    html += "<style>";
+    html += "body{font-family:Arial,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px;}";
+    html += "h1{color:#58a6ff;font-size:1.4em;}";
+    html += ".card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;max-width:460px;margin:14px 0;}";
+    html += ".row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #21262d;}";
+    html += ".row:last-child{border-bottom:none;}";
+    html += ".btn{display:block;padding:11px 20px;border-radius:6px;border:none;font-size:.95em;cursor:pointer;text-align:center;width:100%;margin-top:10px;text-decoration:none;}";
+    html += ".btn-check{background:#1f6feb;color:#fff;}";
+    html += ".btn-install{background:#238636;color:#fff;display:none;}";
+    html += ".btn-back{background:#21262d;color:#e6edf3;}";
+    html += "#status{margin-top:12px;padding:10px;border-radius:6px;font-size:.9em;display:none;}";
+    html += ".ok{background:#0d2817;border:1px solid #238636;color:#3fb950;}";
+    html += ".info{background:#0d1926;border:1px solid #1f6feb;color:#58a6ff;}";
+    html += ".err{background:#2d1117;border:1px solid #f85149;color:#f85149;}";
+    html += "</style></head><body>";
+    html += "<h1>&#128257; Firmware Update</h1>";
+    html += "<div class='card'>";
+    html += "<div class='row'><span>Installiert</span><b style='color:#58a6ff;'>" FIRMWARE_VERSION "</b></div>";
+    html += "<div class='row'><span>Verf&uuml;gbar</span><span id='avail' style='color:#8b949e;'>–</span></div>";
+    html += "<div id='status'></div>";
+    html += "<button class='btn btn-check' onclick='checkUpdate()'>&#128257; Auf Updates pr&uuml;fen</button>";
+    html += "<button class='btn btn-install' id='btnInstall' onclick='installUpdate()'>&#9889; Jetzt updaten</button>";
+    html += "<a href='/config' class='btn btn-back' style='margin-top:8px;'>&#8592; Zur&uuml;ck</a>";
+    html += "</div>";
+    html += "<script>";
+    html += "function setStatus(msg,cls){var s=document.getElementById('status');s.textContent=msg;s.className=cls;s.style.display='block';}";
+    html += "function checkUpdate(){";
+    html += "  setStatus('Prüfe Version...','info');";
+    html += "  fetch('/update/check').then(r=>r.json()).then(d=>{";
+    html += "    document.getElementById('avail').textContent=d.available;";
+    html += "    if(d.hasUpdate){";
+    html += "      setStatus('Neue Version '+d.available+' verfügbar!','ok');";
+    html += "      document.getElementById('btnInstall').style.display='block';";
+    html += "    } else {";
+    html += "      setStatus('Bereits aktuell ('+d.current+')','ok');";
+    html += "    }";
+    html += "  }).catch(()=>setStatus('Fehler beim Prüfen – WLAN ok?','err'));";
+    html += "}";
+    html += "function installUpdate(){";
+    html += "  document.getElementById('btnInstall').disabled=true;";
+    html += "  setStatus('Update wird heruntergeladen und installiert... bitte warten (ca. 30 Sek.)','info');";
+    html += "  fetch('/update/install').then(r=>r.text()).then(t=>{";
+    html += "    if(t==='ok'){setStatus('Update erfolgreich! Cube startet neu...','ok');}";
+    html += "    else{setStatus('Fehler: '+t,'err');document.getElementById('btnInstall').disabled=false;}";
+    html += "  }).catch(()=>setStatus('Verbindung verloren – Cube startet neu.','ok'));";
+    html += "}";
+    html += "</script></body></html>";
+    server.send(200, "text/html", html);
+}
+
+void handleOTACheck() {
+    if (WiFi.status() != WL_CONNECTED) {
+        server.send(503, "application/json", "{\"error\":\"no wifi\"}");
+        return;
+    }
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+    http.begin(client, OTA_VERSION_URL);
+    http.setTimeout(8000);
+    int code = http.GET();
+    if (code != 200) {
+        http.end();
+        server.send(502, "application/json", "{\"error\":\"fetch failed\"}");
+        return;
+    }
+    DynamicJsonDocument doc(256);
+    deserializeJson(doc, http.getString());
+    http.end();
+    String available = doc["version"] | FIRMWARE_VERSION;
+    bool hasUpdate = (available != String(FIRMWARE_VERSION));
+    String resp = "{\"current\":\"" FIRMWARE_VERSION "\",\"available\":\"" + available + "\",\"hasUpdate\":" + (hasUpdate ? "true" : "false") + "}";
+    server.send(200, "application/json", resp);
+}
+
+void handleOTAInstall() {
+    if (WiFi.status() != WL_CONNECTED) {
+        server.send(503, "text/plain", "no wifi");
+        return;
+    }
+    Serial.println("OTA: Download startet...");
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+    http.begin(client, OTA_FIRMWARE_URL);
+    http.setTimeout(30000);
+    int code = http.GET();
+    if (code != 200) {
+        http.end();
+        Serial.printf("OTA: HTTP Fehler %d\n", code);
+        server.send(502, "text/plain", "download error " + String(code));
+        return;
+    }
+    int contentLen = http.getSize();
+    WiFiClient* stream = http.getStreamPtr();
+    Serial.printf("OTA: %d Bytes\n", contentLen);
+    if (!Update.begin(contentLen > 0 ? contentLen : UPDATE_SIZE_UNKNOWN)) {
+        http.end();
+        server.send(500, "text/plain", "begin failed");
+        return;
+    }
+    size_t written = Update.writeStream(*stream);
+    bool success = Update.end(true) && !Update.hasError();
+    http.end();
+    if (success) {
+        Serial.printf("OTA: %d Bytes geschrieben – Neustart\n", written);
+        server.send(200, "text/plain", "ok");
+        delay(1500);
+        ESP.restart();
+    } else {
+        Serial.printf("OTA Fehler: %s\n", Update.errorString());
+        server.send(500, "text/plain", Update.errorString());
+    }
 }

@@ -82,8 +82,12 @@ Entwicklungsumgebung:
 ### Einrichtung nach dem Flashen
 
 1. Der Cube öffnet das WLAN **`WetterCube-Setup`**
-2. Damit verbinden und `192.168.4.1` im Browser aufrufen
-3. WLAN-Name, Passwort und Wohnort eingeben → Cube verbindet sich und zeigt sofort das Wetter an
+2. Damit verbinden – auf iOS/Android öffnet sich das Portal automatisch, sonst `192.168.4.1` im Browser aufrufen
+3. WLAN-Name und Passwort aus der Liste wählen oder manuell eingeben
+4. Standort (Stadtname) eingeben → Cube verbindet sich und zeigt sofort das Wetter an
+
+> **Hinweis zu Umlauten:** Bei Städten mit Umlauten bitte den Buchstaben **ohne Punkt** schreiben.  
+> Beispiele: `Munchen` statt `München` · `Koln` statt `Köln` · `Dusseldorf` statt `Düsseldorf`
 
 ---
 
@@ -241,8 +245,12 @@ The firmware can be flashed directly from your browser:
 ### Initial Setup After Flashing
 
 1. The cube creates a Wi-Fi network called **`WetterCube-Setup`**
-2. Connect to it and open `192.168.4.1` in your browser
-3. Enter your Wi-Fi name, password, and location → the cube connects and immediately displays weather data
+2. Connect to it – on iOS/Android the portal opens automatically, otherwise open `192.168.4.1` in your browser
+3. Select or enter your Wi-Fi name and password
+4. Enter your location (city name) → the cube connects and immediately displays weather data
+
+> **Note on special characters:** For cities with umlauts, write the letter **without the dots**.  
+> Examples: `Munich` · `Cologne` · `Dusseldorf` instead of `Düsseldorf`
 
 ---
 
