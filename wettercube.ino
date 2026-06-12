@@ -8,12 +8,12 @@
 #include <WebServer.h>
 #include <Preferences.h>
 #include <ESPmDNS.h>
-#include <WiFiManager.h>
+#include <DNSServer.h>
 #include <WiFiClientSecure.h>
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.5.1"
+#define FIRMWARE_VERSION     "1.6.0"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/wettercube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/wettercube/firmware/firmware.bin"
 
@@ -101,6 +101,9 @@ void fetchPollen();
 void setPollenLabel(lv_obj_t* label, float value);
 void updateWeatherIcon(int wmoCode);
 void showBootScreen();
+void runCaptivePortal();
+void handlePortalRoot();
+void handlePortalSave();
 void loadConfig();
 void startConfigServer();
 void handleConfig();
@@ -253,7 +256,102 @@ void checkTouchButton() {
 // Setup-Portal entfällt – WLAN-Einrichtung erfolgt über WiFiManager (tzapu)
 // Reset: wm.resetSettings() z.B. bei langem Tastendruck aufrufen
 
-// --- BOOT SCREEN ---
+// --- BOOT SCREEN / CAPTIVE PORTAL ---
+
+static DNSServer dnsServer;
+static bool portalActive = false;
+static WebServer portalServer(80);
+
+void handlePortalRoot() {
+    String savedSsid = preferences.getString("ssid", "");
+    String savedLoc  = preferences.getString("location", "");
+
+    int n = WiFi.scanNetworks();
+    String opts = "";
+    for (int i = 0; i < n; i++) {
+        String s = WiFi.SSID(i);
+        opts += "<option value='" + s + "'" + (s == savedSsid ? " selected" : "") + ">" + s + " (" + String(WiFi.RSSI(i)) + " dBm)</option>";
+    }
+
+    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        "<title>WetterCube Setup</title>"
+        "<style>body{font-family:Arial,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px;}"
+        "h1{color:#58a6ff;} p{color:#8b949e;font-size:.9em;}"
+        "input,select{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;"
+        "padding:9px;width:100%;box-sizing:border-box;margin-top:6px;font-size:1em;}"
+        "button{background:#238636;color:#fff;border:none;padding:12px;border-radius:6px;"
+        "cursor:pointer;width:100%;font-size:1em;margin-top:14px;}"
+        "label{display:block;margin-top:12px;font-size:.9em;color:#8b949e;}</style></head><body>"
+        "<h1>&#9729; WetterCube Setup</h1>"
+        "<p>WLAN-Zugangsdaten und Standort eingeben.</p>"
+        "<form method='POST' action='/save'>"
+        "<label>WLAN-Netzwerk</label><select name='ssid'>" + opts + "</select>"
+        "<label>Passwort</label><input type='password' name='pass'>"
+        "<label>Standort (Stadtname, z.B. Berlin)</label>"
+        "<input type='text' name='loc' value='" + savedLoc + "' placeholder='Berlin'>"
+        "<p style='font-size:.8em;'>Bei Umlauten: Munchen statt M&uuml;nchen</p>"
+        "<button type='submit'>Speichern &amp; Verbinden</button>"
+        "</form></body></html>";
+    portalServer.send(200, "text/html", html);
+}
+
+void handlePortalSave() {
+    String ssid = portalServer.arg("ssid");
+    String pass = portalServer.arg("pass");
+    String loc  = portalServer.arg("loc");
+    loc.trim();
+
+    preferences.putString("ssid", ssid);
+    preferences.putString("pass", pass);
+    if (loc.length() >= 2) {
+        bool changed = (loc != preferences.getString("location", ""));
+        preferences.putString("location", loc);
+        location = loc;
+        if (changed) {
+            latitude = 0.0; longitude = 0.0;
+            preferences.putFloat("lat", 0.0);
+            preferences.putFloat("lon", 0.0);
+        }
+    }
+
+    portalServer.send(200, "text/html",
+        "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+        "<style>body{font-family:Arial;background:#0d1117;color:#e6edf3;text-align:center;padding:60px;}"
+        "h2{color:#3fb950;}</style></head><body>"
+        "<h2>&#10003; Gespeichert!</h2><p>WetterCube verbindet sich neu...</p></body></html>");
+
+    delay(1500);
+    ESP.restart();
+}
+
+void runCaptivePortal() {
+    lv_label_set_text(uic_LabelStatus, "Portal: WetterCube-Setup");
+    lv_bar_set_value(uic_BarWifi, 30, LV_ANIM_ON);
+    lv_timer_handler();
+
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP("WetterCube-Setup");
+    dnsServer.start(53, "*", WiFi.softAPIP());
+
+    portalServer.on("/",     HTTP_GET,  handlePortalRoot);
+    portalServer.on("/save", HTTP_POST, handlePortalSave);
+    portalServer.onNotFound([]() { portalServer.sendHeader("Location", "http://192.168.4.1/"); portalServer.send(302); });
+    portalServer.begin();
+
+    unsigned long start = millis();
+    while (millis() - start < 180000UL) {
+        dnsServer.processNextRequest();
+        portalServer.handleClient();
+        lv_timer_handler();
+        delay(5);
+    }
+
+    lv_label_set_text(uic_LabelStatus, "Timeout - Neustart...");
+    lv_timer_handler();
+    delay(2000);
+    ESP.restart();
+}
 
 void showBootScreen() {
     lv_disp_load_scr(ui_ScreenBoot);
@@ -261,99 +359,43 @@ void showBootScreen() {
     lv_label_set_text(uic_LabelStatus, "Verbinde mit WLAN...");
     lv_timer_handler();
 
-    String savedLocation = preferences.getString("location", "");
-    char locationBuf[64];
-    savedLocation.toCharArray(locationBuf, sizeof(locationBuf));
+    location = preferences.getString("location", "");
+    String ssid = preferences.getString("ssid", "");
+    String pass = preferences.getString("pass", "");
 
-    WiFiManager wm;
-    wm.setConfigPortalTimeout(180);
-    wm.setTitle("WetterCube");
+    if (ssid.length() == 0) {
+        runCaptivePortal();
+        return;
+    }
 
-    // Deutsches Styling + Button-Übersetzung per JS
-    wm.setCustomHeadElement(
-        "<style>"
-        "*{color:#e6edf3;}"
-        "body{font-family:Arial,sans-serif;background:#0d1117;}"
-        "h1{color:#58a6ff;} h3{color:#8b949e;font-weight:normal;}"
-        "a{color:#58a6ff;}"
-        "li,li a,li label{color:#e6edf3 !important;}"
-        ".wrap{background:#0d1117;}"
-        "input,textarea{background:#161b22 !important;color:#e6edf3 !important;border:1px solid #30363d;border-radius:6px;padding:8px;width:100%;box-sizing:border-box;}"
-        "input[type=submit],button{background:#238636 !important;color:#fff !important;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%;font-size:1em;margin-top:8px;}"
-        ".msg,.q{background:#161b22 !important;border:1px solid #30363d;border-radius:8px;padding:12px;color:#e6edf3 !important;}"
-        "label{color:#e6edf3 !important;}"
-        "</style>"
-        "<script>window.addEventListener('load',function(){"
-        "  document.querySelectorAll('input[type=submit]').forEach(function(b){"
-        "    if(b.value==='Configure WiFi'||b.value==='Save')b.value='Speichern';"
-        "    if(b.value==='Scan')b.value='Netzwerke suchen';"
-        "  });"
-        "  document.querySelectorAll('a').forEach(function(a){"
-        "    if(a.textContent==='Configure WiFi')a.textContent='WLAN einrichten';"
-        "    if(a.textContent==='Info')a.textContent='Info';"
-        "    if(a.textContent==='Update')a.textContent='Update';"
-        "    if(a.textContent==='Exit Portal')a.textContent='Portal beenden';"
-        "  });"
-        "});</script>"
-    );
-
-    // Hinweistext im Portal
-    wm.setCustomMenuHTML(
-        "<p style='color:#8b949e;text-align:center;padding:0 16px;'>"
-        "Gib deine WLAN-Zugangsdaten und deinen <b style='color:#58a6ff;'>Standort</b> ein.<br>"
-        "<small>Stadtname auf Deutsch oder Englisch, z.B. <i>Berlin</i></small></p>"
-    );
-
-    // Custom Parameter: Standort
-    WiFiManagerParameter custom_location("location", "Standort (z.B. Berlin)", locationBuf, 60);
-    wm.addParameter(&custom_location);
-
-    // Anzeige wenn Portal geöffnet wird
-    wm.setAPCallback([](WiFiManager*) {
-        lv_label_set_text(uic_LabelStatus, "Portal: WetterCube-Setup");
-        lv_bar_set_value(uic_BarWifi, 30, LV_ANIM_ON);
-        lv_timer_handler();
-    });
-
-    lv_bar_set_value(uic_BarWifi, 10, LV_ANIM_ON);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid.c_str(), pass.c_str());
+    lv_bar_set_value(uic_BarWifi, 20, LV_ANIM_ON);
     lv_timer_handler();
 
-    if (wm.autoConnect("WetterCube-Setup")) {
-        lv_bar_set_value(uic_BarWifi, 100, LV_ANIM_ON);
-
-        // Standort aus Parameter lesen und bei Änderung speichern
-        String newLocation = String(custom_location.getValue());
-        newLocation.trim();
-        if (newLocation.length() >= 2) {
-            bool locationChanged = (newLocation != savedLocation);
-            location = newLocation;
-            preferences.putString("location", location);
-            if (locationChanged || (latitude == 0.0 && longitude == 0.0)) {
-                latitude = 0.0; longitude = 0.0;
-                preferences.putFloat("lat", 0.0);
-                preferences.putFloat("lon", 0.0);
-            }
-        }
-
-        // IP anzeigen
-        String ipStr = "Verbunden!  IP: " + WiFi.localIP().toString();
-        lv_label_set_text(uic_LabelStatus, ipStr.c_str());
+    unsigned long t = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - t < 15000UL) {
+        delay(300);
         lv_timer_handler();
-
-        if (MDNS.begin("wettercube")) Serial.println("mDNS: http://wettercube.local");
-        startConfigServer();
-
-        delay(5000);
-        lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
-        currentScreen = 1;
-        lv_timer_handler();
-    } else {
-        // Timeout → Neustart
-        lv_label_set_text(uic_LabelStatus, "Timeout - Neustart...");
-        lv_timer_handler();
-        delay(2000);
-        ESP.restart();
     }
+
+    if (WiFi.status() != WL_CONNECTED) {
+        runCaptivePortal();
+        return;
+    }
+
+    lv_bar_set_value(uic_BarWifi, 100, LV_ANIM_ON);
+    String ipStr = "Verbunden!  IP: " + WiFi.localIP().toString();
+    lv_label_set_text(uic_LabelStatus, ipStr.c_str());
+    lv_timer_handler();
+
+    if (MDNS.begin("wettercube")) Serial.println("mDNS: http://wettercube.local");
+    startConfigServer();
+
+    delay(5000);
+    lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+    currentScreen = 1;
+    lv_timer_handler();
 }
 
 // --- GEOCODING (Stadtname → Koordinaten) ---
