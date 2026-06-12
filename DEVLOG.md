@@ -233,6 +233,18 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.5.1 | WiFiManager (tzapu) ersetzt eigenes Captive Portal |
 | 1.6.0 | OTA-Update via GitHub Pages, Helligkeitsregler, WiFiManager durch eigenes schlankes Portal ersetzt (Sketch 103% → 99%) |
 | 1.6.1 | OTA-Testrelease – bestätigt funktionierende OTA-Update-Kette |
+| 1.6.2 | Crash-Fix: LVGL-Animation vor HTTP-Calls abwarten, Pollen-Warnung NULL-gesichert |
+
+---
+
+## Bekannte Bugs & Fixes
+
+### v1.6.2: Crash nach WLAN-Verbindung (LVGL-Animation)
+**Problem:** Nach WLAN-Connect startete `lv_scr_load_anim()` eine 500ms-Animation, danach begannen sofort die HTTP-Calls für Wetter und Pollen. Der LVGL-Animations-Callback feuerte genau während des ersten HTTP-Requests → Null-Pointer-Zugriff auf LVGL-Objekt (MTVAL=0x0020) → Guru Meditation Error / Crash-Loop.
+
+**Fix:** Nach `lv_scr_load_anim()` wird die Animation vollständig abgewartet (600ms `lv_timer_handler()`-Loop) bevor HTTP-Calls starten.
+
+**Zusatz:** Pollen-Warnscreen-Labels mit NULL-Guards abgesichert für den Fall dass die Widgets noch nicht initialisiert sind.
 
 ---
 
