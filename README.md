@@ -129,9 +129,18 @@ in dem Fall einfach den Cube neu starten und die neue IP ablesen.
 | | Pollen-Warnung ein/aus |
 | | Pollen-Schwellwert: Mäßig / Hoch / Sehr hoch |
 | **Screens** | Screens 2–5 einzeln aktivieren oder deaktivieren |
-| **Display** | Dimm-Timeout: Aus / 1 / 3 / 5 / 10 Minuten |
+| **Display** | Helligkeit: 10–100 % (Slider, wird sofort angewendet) |
+| | Dimm-Timeout: Aus / 1 / 3 / 5 / 10 Minuten |
+| **Firmware** | OTA-Update: Neue Version per WLAN einspielen – kein USB nötig |
 
 Alle Einstellungen werden dauerhaft im Flash gespeichert und bleiben nach einem Neustart erhalten.
+
+### OTA-Update
+
+Unter `http://wettercube.local/update` lässt sich die Firmware komplett ohne USB aktualisieren:
+
+1. **Auf Updates prüfen** – Cube vergleicht installierte Version mit der aktuellen auf GitHub
+2. Bei neuer Version: **Jetzt updaten** – Download und Flash laufen automatisch, Cube startet neu
 
 ---
 
@@ -287,9 +296,18 @@ Enter this address in your browser. The IP may change after a reboot – just re
 | | Pollen warning on/off |
 | | Pollen threshold: Moderate / High / Very High |
 | **Screens** | Enable or disable screens 2–5 individually |
-| **Display** | Dimming timeout: Off / 1 / 3 / 5 / 10 minutes |
+| **Display** | Brightness: 10–100 % (slider, applied instantly) |
+| | Dimming timeout: Off / 1 / 3 / 5 / 10 minutes |
+| **Firmware** | OTA update: install new firmware over Wi-Fi – no USB required |
 
 All settings are stored permanently in flash memory.
+
+### OTA Update
+
+Visit `http://wettercube.local/update` to update the firmware without USB:
+
+1. **Check for updates** – the cube compares the installed version with the latest on GitHub
+2. If a new version is available: **Update now** – download and flash run automatically, cube restarts
 
 ---
 

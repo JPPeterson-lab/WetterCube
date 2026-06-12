@@ -81,16 +81,18 @@ SquareLine Studio generiert bei jedem Export einen `#error`-Check für
 - Nach erfolgreicher Verbindung: 4 Sekunden stehen bleiben, dann Fade zu Screen 1
 - Bei Fehler: Meldung + Setup-Portal öffnen
 
-### WLAN & Captive Portal (WiFiManager by tzapu)
-- Bibliothek: WiFiManager (tzapu) – in Arduino Library Manager verfügbar
+### WLAN & Captive Portal (eigene Implementierung, ab v1.6.0)
+- Kein externer Library-Overhead – eigene schlanke Implementierung mit `DNSServer` + `WebServer`
 - Beim ersten Start oder wenn kein WLAN gespeichert: AP "WetterCube-Setup" öffnet sich automatisch
 - Captive Portal öffnet sich auf iOS/Android automatisch beim Verbinden mit dem AP
-- Custom Parameter im Portal: Standort (Stadtname) – wird in Preferences gespeichert
-- WLAN-Credentials werden von WiFiManager intern im Flash verwaltet (kein eigener Preferences-Key nötig)
-- Nach erfolgreichem Connect: direkt weiter, kein Neustart nötig
-- Timeout: 180 Sek → ESP.restart()
-- Reset der WLAN-Daten: `wm.resetSettings()` (z.B. bei langem Tastendruck aufrufbar)
+- Portal zeigt gescannte WLAN-Netzwerke als Dropdown, Passwortfeld, Standortfeld
+- WLAN-Credentials (SSID + Passwort) in eigenen Preferences-Keys `ssid` / `pass` gespeichert
+- Standort in Preferences-Key `location` gespeichert
+- Nach Eingabe: Neustart → Cube verbindet sich direkt, kein zweites Portal nötig
+- Timeout Portal: 180 Sek → ESP.restart()
+- Bei Verbindungsfehler nach Neustart: Portal öffnet sich erneut automatisch
 - Geocoding via Open-Meteo API (Stadtname → Koordinaten), Koordinaten dauerhaft in Preferences
+- **Hinweis:** WiFiManager (tzapu) war in v1.5.1 eingebaut, wurde in v1.6.0 entfernt wegen zu großem Sketch (103% → 99%)
 
 ### Wetter-Abruf (`fetchWeather()`)
 - Intervall: alle 15 Minuten
@@ -193,6 +195,14 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 
 ---
 
+### OTA-Voraussetzung: Partition Scheme
+- OTA benötigt zwei App-Partitionen im Flash → Partition Scheme muss OTA-fähig sein
+- Korrekte Einstellung: `Tools → Partition Scheme → Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)`
+- Standard-Partition hat keinen OTA-Slot → `Update.begin()` scheitert mit "begin failed"
+- Nach Wechsel des Partition Scheme: alle 4 Bins neu kompilieren und exportieren
+
+---
+
 ## Bekannte Eigenheiten
 
 - **LV_COLOR_16_SWAP** muss nach jedem SLS-Export in `ui.c` auskommentiert werden
@@ -221,7 +231,8 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.4.1 | Pollen-Warnscreen (blinkend orange, Touch-Quittierung) |
 | 1.5.0 | Web-Konfiguration (mDNS, IP-Anzeige Boot-Screen, Config-UI) |
 | 1.5.1 | WiFiManager (tzapu) ersetzt eigenes Captive Portal |
-| 1.6.0 | OTA-Update via GitHub Pages, Helligkeitsregler, WiFiManager-Portal auf Deutsch |
+| 1.6.0 | OTA-Update via GitHub Pages, Helligkeitsregler, WiFiManager durch eigenes schlankes Portal ersetzt (Sketch 103% → 99%) |
+| 1.6.1 | OTA-Testrelease – bestätigt funktionierende OTA-Update-Kette |
 
 ---
 
