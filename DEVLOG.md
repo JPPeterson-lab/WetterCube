@@ -234,6 +234,7 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.6.0 | OTA-Update via GitHub Pages, Helligkeitsregler, WiFiManager durch eigenes schlankes Portal ersetzt (Sketch 103% → 99%) |
 | 1.6.1 | OTA-Testrelease – bestätigt funktionierende OTA-Update-Kette |
 | 1.6.2 | Crash-Fix: LVGL-Animation vor HTTP-Calls abwarten, Pollen-Warnung NULL-gesichert |
+| 1.7.0 | WLAN-Wechsel im Web-UI, Custom Partition Table (SPIFFS entfernt, App 2MB), lv_conf.h projektlokal via build_opt.h |
 
 ---
 
@@ -247,5 +248,28 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 **Zusatz:** Pollen-Warnscreen-Labels mit NULL-Guards abgesichert für den Fall dass die Widgets noch nicht initialisiert sind.
 
 ---
+
+---
+
+## v1.7.0 – WLAN-Wechsel, Custom Partition, lv_conf.h projektlokal
+
+### WLAN-Wechsel im Web-UI
+- Neuer Bereich "WLAN wechseln" auf der Config-Seite (`http://wettercube.local`)
+- Zeigt aktuell verbundenes Netzwerk, scannt beim Laden automatisch verfügbare Netzwerke
+- Netzwerk + Passwort speichern → Cube startet neu und verbindet sich mit dem neuen WLAN
+- Kein Captive Portal nötig – funktioniert vollständig im normalen Betrieb
+- Neue Endpunkte: `GET /wifi/scan` (JSON), `POST /wifi/change`
+
+### Custom Partition Table
+- `partitions.csv` im Sketch-Ordner: SPIFFS-Partition entfernt (wird nicht genutzt, NVS/Preferences bleibt)
+- App-Partitionen von 1.966.080 auf **2.031.616 Bytes** vergrößert (+65KB)
+- Löst das Größenproblem mit Board Package 3.3.10 dauerhaft
+- `Tools → Partition Scheme → Custom` in Arduino IDE wählen
+- **Hinweis:** Erster Flash nach Partitionsänderung muss vollständig sein (alle 4 Bins), danach OTA normal
+
+### lv_conf.h projektlokal via build_opt.h
+- `lv_conf.h` in Arduino-Bibliotheken hat jetzt `#ifndef`-Guards um `LV_COLOR_16_SWAP` und `LV_MEM_SIZE`
+- WetterCube setzt `-DLV_COLOR_16_SWAP=0 -DLV_MEM_SIZE=65536` in `build_opt.h`
+- Andere Projekte können abweichende Werte in ihrer `build_opt.h` setzen ohne WetterCube zu beeinflussen
 
 *Zuletzt aktualisiert: Juni 2026*

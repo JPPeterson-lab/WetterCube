@@ -13,7 +13,7 @@
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.6.2"
+#define FIRMWARE_VERSION     "1.7.0"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/wettercube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/wettercube/firmware/firmware.bin"
 
@@ -111,6 +111,8 @@ void handleConfigSave();
 void handleOTAPage();
 void handleOTACheck();
 void handleOTAInstall();
+void handleWifiScan();
+void handleWifiChange();
 
 void setup() {
     Serial.begin(115200);
@@ -755,6 +757,8 @@ void startConfigServer() {
     server.on("/update",        HTTP_GET, handleOTAPage);
     server.on("/update/check",  HTTP_GET, handleOTACheck);
     server.on("/update/install",HTTP_GET, handleOTAInstall);
+    server.on("/wifi/scan",     HTTP_GET, handleWifiScan);
+    server.on("/wifi/change",   HTTP_POST, handleWifiChange);
     server.begin();
     Serial.println("Config-Server: http://wettercube.local  |  /update fuer OTA");
 }
@@ -842,7 +846,40 @@ void handleConfig() {
     html += "</div></div>";
 
     html += "<button type='submit'>&#10003; Speichern</button>";
-    html += "</form></body></html>";
+    html += "</form>";
+
+    // --- WLAN wechseln (eigenes Formular, kein Teil der Config-Form) ---
+    String curSsid = preferences.getString("ssid", "");
+    html += "<div class='card'><h2>&#128246; WLAN wechseln</h2>";
+    html += "<div class='row'><label>Aktuelles Netzwerk</label><span style='color:#58a6ff;font-weight:bold;'>" + curSsid + "</span></div>";
+    html += "<form action='/wifi/change' method='POST' style='margin-top:12px;'>";
+    html += "<label style='font-size:.85em;color:#8b949e;display:block;margin-bottom:4px;'>Neues Netzwerk</label>";
+    html += "<select name='ssid' id='wifiSel' style='width:100%;max-width:420px;margin-bottom:10px;'>";
+    html += "<option value=''>-- Netzwerke laden... --</option>";
+    html += "</select>";
+    html += "<label style='font-size:.85em;color:#8b949e;display:block;margin-bottom:4px;'>Passwort</label>";
+    html += "<input type='password' name='pass' placeholder='WLAN-Passwort' style='background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:5px;padding:8px 10px;width:100%;max-width:420px;box-sizing:border-box;font-size:.95em;margin-bottom:10px;'>";
+    html += "<button type='button' onclick='scanWifi()' style='background:#1f6feb;margin-bottom:8px;'>&#128247; Netzwerke scannen</button>";
+    html += "<button type='submit' style='background:#b08800;'>&#128246; Netzwerk wechseln &amp; neu starten</button>";
+    html += "</form></div>";
+
+    html += "<script>";
+    html += "function scanWifi(){";
+    html += "  var sel=document.getElementById('wifiSel');";
+    html += "  sel.innerHTML='<option>Scanne...</option>';";
+    html += "  fetch('/wifi/scan').then(r=>r.json()).then(nets=>{";
+    html += "    sel.innerHTML='';";
+    html += "    nets.forEach(function(n){";
+    html += "      var o=document.createElement('option');";
+    html += "      o.value=n.ssid;o.textContent=n.ssid+' ('+n.rssi+' dBm)';";
+    html += "      sel.appendChild(o);";
+    html += "    });";
+    html += "  }).catch(()=>{sel.innerHTML='<option>Fehler beim Scannen</option>';});";
+    html += "}";
+    html += "scanWifi();";
+    html += "</script>";
+
+    html += "</body></html>";
 
     server.send(200, "text/html", html);
 }
@@ -1006,4 +1043,39 @@ void handleOTAInstall() {
         Serial.printf("OTA Fehler: %s\n", Update.errorString());
         server.send(500, "text/plain", Update.errorString());
     }
+}
+
+// =============================================================================
+// --- WLAN WECHSELN ---
+// =============================================================================
+
+void handleWifiScan() {
+    int n = WiFi.scanNetworks();
+    String json = "[";
+    for (int i = 0; i < n; i++) {
+        if (i > 0) json += ",";
+        json += "{\"ssid\":\"" + WiFi.SSID(i) + "\",\"rssi\":" + String(WiFi.RSSI(i)) + "}";
+    }
+    json += "]";
+    server.send(200, "application/json", json);
+}
+
+void handleWifiChange() {
+    String ssid = server.arg("ssid");
+    String pass = server.arg("pass");
+    if (ssid.length() == 0) {
+        server.send(400, "text/plain", "Kein Netzwerk gewählt");
+        return;
+    }
+    preferences.putString("ssid", ssid);
+    preferences.putString("pass", pass);
+    server.send(200, "text/html",
+        "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+        "<style>body{font-family:Arial;background:#0d1117;color:#e6edf3;text-align:center;padding:60px;}"
+        "h2{color:#3fb950;}</style></head><body>"
+        "<h2>&#10003; Gespeichert!</h2>"
+        "<p>WetterCube verbindet sich mit <b>" + ssid + "</b> und startet neu...</p>"
+        "</body></html>");
+    delay(1500);
+    ESP.restart();
 }
