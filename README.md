@@ -33,9 +33,9 @@ kein API-Key nötig.
 
 ## 🎬 Showcase
 
-<video src="https://github.com/user-attachments/assets/ee37fd90-d35f-4771-976b-9f5b130c3df7" controls width="460"></video>
+<img src="https://github.com/user-attachments/assets/cd4fd6d4-ea4d-4d76-acee-f8cb04ccec00" width="460" alt="WetterCube in verschiedenen Designfarben">
 
-<img src="https://github.com/user-attachments/assets/83afa5cc-405c-47f4-8ed1-395f43120ae1" width="460" alt="WetterCube in verschiedenen Designfarben">
+<video src="https://github.com/user-attachments/assets/ee37fd90-d35f-4771-976b-9f5b130c3df7" controls width="460"></video>
 
 ---
 
