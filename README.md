@@ -78,7 +78,7 @@ Schaut euch auch seine weiteren Projekte an: [github.com/Keralots](https://githu
 Die Firmware lässt sich direkt im Browser flashen – ganz ohne
 Entwicklungsumgebung:
 
-**👉 [WetterCube Web-Installer öffnen](https://jppeterson-lab.github.io/wettercube/)**
+**👉 [WetterCube Web-Installer öffnen](https://jppeterson-lab.github.io/WetterCube/)**
 
 > Funktioniert nur in **Google Chrome** oder **Microsoft Edge** (WebSerial API). Der Anleitung folgen, die auf dem Monitor erscheint. Das Flashen ist nur einmalig nötig. Bei Updates kann der Vorgang wiederholt werden – sowie wenn sich das WLAN-Netz bzw. der Zugang ändert oder der Ort, von welchem das Wetter angezeigt werden soll.
 
@@ -253,7 +253,7 @@ Check out his other projects at: [github.com/Keralots](https://github.com/Keralo
 
 The firmware can be flashed directly from your browser:
 
-**👉 [Open WetterCube Web Installer](https://jppeterson-lab.github.io/wettercube/)**
+**👉 [Open WetterCube Web Installer](https://jppeterson-lab.github.io/WetterCube/)**
 
 > Works only in **Google Chrome** or **Microsoft Edge** (WebSerial API). Follow the on-screen instructions. Flashing is only required once and can be repeated for updates or when changing Wi-Fi credentials or location.
 

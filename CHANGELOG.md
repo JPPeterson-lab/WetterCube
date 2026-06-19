@@ -4,6 +4,13 @@ Alle relevanten Änderungen je Version. Neueste Version zuerst.
 
 ---
 
+## [1.7.2] – 2026-06-19
+
+### Behoben
+- **OTA-URLs korrigiert** – Repository wurde zu `WetterCube` (Großbuchstabe) umbenannt, GitHub Pages URL hatte sich dadurch geändert. OTA-Check und Firmware-Download zeigen jetzt auf die korrekte URL.
+
+---
+
 ## [1.7.1] – 2026-06-19
 
 ### Behoben

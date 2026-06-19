@@ -13,9 +13,9 @@
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.7.1"
-#define OTA_VERSION_URL      "https://jppeterson-lab.github.io/wettercube/version.json"
-#define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/wettercube/firmware/firmware.bin"
+#define FIRMWARE_VERSION     "1.7.2"
+#define OTA_VERSION_URL      "https://jppeterson-lab.github.io/WetterCube/version.json"
+#define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/WetterCube/firmware/firmware.bin"
 
 // --- SPEICHER & WEB-SERVER ---
 Preferences preferences;
