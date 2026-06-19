@@ -4,6 +4,15 @@ Alle relevanten Änderungen je Version. Neueste Version zuerst.
 
 ---
 
+## [1.7.1] – 2026-06-19
+
+### Behoben
+- **Nachtmodus Touch-Wake** – nach Touch kehrt Display nach 15 Sekunden Inaktivität automatisch zur Nachtmodus-Helligkeit zurück; weitere Touches verlängern den Timer; normaler Dimm-Timeout greift im Nachtmodus nicht mehr
+- **Config-Seite Hang** – WLAN-Scan wird nicht mehr automatisch beim Laden ausgelöst, sondern nur noch auf Knopfdruck
+- **Standort-Formular** – war innerhalb des Haupt-Formulars verschachtelt (ungültiges HTML), dadurch konnte Speichern nicht funktionieren; jetzt eigenes Formular außerhalb
+
+---
+
 ## [1.7.0] – 2026-06-14
 
 ### Neu

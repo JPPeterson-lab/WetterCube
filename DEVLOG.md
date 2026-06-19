@@ -235,6 +235,7 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.6.1 | OTA-Testrelease – bestätigt funktionierende OTA-Update-Kette |
 | 1.6.2 | Crash-Fix: LVGL-Animation vor HTTP-Calls abwarten, Pollen-Warnung NULL-gesichert |
 | 1.7.0 | WLAN-Wechsel im Web-UI, Custom Partition Table (SPIFFS entfernt, App 2MB), lv_conf.h projektlokal via build_opt.h |
+| 1.7.1 | Bugfix: Nachtmodus Touch-Wake (15s Timer), Config-Hang durch WLAN-Auto-Scan behoben, Standort-Formular-Fix |
 
 ---
 
@@ -271,5 +272,24 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - `lv_conf.h` in Arduino-Bibliotheken hat jetzt `#ifndef`-Guards um `LV_COLOR_16_SWAP` und `LV_MEM_SIZE`
 - WetterCube setzt `-DLV_COLOR_16_SWAP=0 -DLV_MEM_SIZE=65536` in `build_opt.h`
 - Andere Projekte können abweichende Werte in ihrer `build_opt.h` setzen ohne WetterCube zu beeinflussen
+
+---
+
+## v1.7.1 – Bugfixes Nachtmodus & Web-UI
+
+### Nachtmodus Touch-Wake (15s Timer)
+- Nach Touch im Nachtmodus kehrt das Display nach **15 Sekunden** Inaktivität automatisch zur Nachtmodus-Helligkeit zurück
+- Jeder weitere Touch verlängert den Timer um 15 Sekunden
+- Normaler Inaktivitäts-Dimmer greift im Nachtmodus nicht mehr
+- `nachtOverride`-Flag mit `nachtOverrideUntil`-Timestamp steuert das Verhalten
+
+### Config-Hang durch WLAN-Auto-Scan behoben
+- `WiFi.scanNetworks()` ist ein blockierender Call (~2–4 Sekunden)
+- Wurde bisher automatisch beim Laden der Config-Seite ausgelöst (`scanWifi()` im JS)
+- Jetzt nur noch auf expliziten Klick auf "Netzwerke scannen"
+
+### Standort-Formular verschachtelt (Fix)
+- Standort-`<form>` war innerhalb des Haupt-`<form>` (ungültiges HTML) → Browser ignoriert innere Forms
+- Jetzt eigenes Formular außerhalb des Config-Formulars
 
 *Zuletzt aktualisiert: Juni 2026*

@@ -13,7 +13,7 @@
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.7.0"
+#define FIRMWARE_VERSION     "1.7.1"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/wettercube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/wettercube/firmware/firmware.bin"
 
@@ -64,6 +64,14 @@ int  pollenSchwellwert    = 30;
 int  dimTimeoutMin        = 3;
 int  brightnessPercent    = 80;   // 10–100%, konfigurierbar per Webinterface
 
+// --- NACHTMODUS ---
+bool nachtModusEnabled  = false;
+int  nachtVon           = 22 * 60; // Minuten seit Mitternacht (22:00)
+int  nachtBis           =  6 * 60; // Minuten seit Mitternacht (06:00)
+int  nachtHelligkeit    = 0;       // 0 = Display aus
+bool nachtOverride          = false;
+unsigned long nachtOverrideUntil = 0; // Zeitstempel bis wann Override aktiv ist
+
 int getBrightPWM() { return (brightnessPercent * 255) / 100; }
 
 // --- DISPLAY HARDWARE PINS ---
@@ -113,6 +121,7 @@ void handleOTACheck();
 void handleOTAInstall();
 void handleWifiScan();
 void handleWifiChange();
+void handleLocationChange();
 
 void setup() {
     Serial.begin(115200);
@@ -161,8 +170,36 @@ void loop() {
 
     checkTouchButton();
 
+    // --- Nachtmodus (zeitbasiert) ---
+    if (nachtModusEnabled) {
+        struct tm ti; getLocalTime(&ti);
+        int nowMin = ti.tm_hour * 60 + ti.tm_min;
+        bool inNight;
+        if (nachtVon < nachtBis) {
+            inNight = (nowMin >= nachtVon && nowMin < nachtBis);
+        } else {
+            inNight = (nowMin >= nachtVon || nowMin < nachtBis); // über Mitternacht
+        }
+        // Override läuft nach 15 Sekunden ab
+        if (nachtOverride && millis() >= nachtOverrideUntil) {
+            nachtOverride = false;
+        }
+        if (inNight && !nachtOverride) {
+            if (!isDimmed) {
+                ledcWrite(TFT_BL, (nachtHelligkeit * 255) / 100);
+                isDimmed = true;
+            }
+        } else if (!inNight) {
+            nachtOverride = false;
+            if (isDimmed) {
+                ledcWrite(TFT_BL, getBrightPWM());
+                isDimmed = false;
+            }
+        }
+    }
+
     // --- Display dimmen nach Inaktivität ---
-    if (!isDimmed && dimTimeoutMs > 0 && millis() - lastActivityTime >= dimTimeoutMs) {
+    if (!nachtModusEnabled && !isDimmed && dimTimeoutMs > 0 && millis() - lastActivityTime >= dimTimeoutMs) {
         ledcWrite(TFT_BL, BL_DIM);
         isDimmed = true;
     }
@@ -203,9 +240,14 @@ void loop() {
 void checkTouchButton() {
     if (digitalRead(TOUCH_PIN) == HIGH) {
         lastActivityTime = millis();
+        if (nachtOverride) nachtOverrideUntil = millis() + 15000UL; // Timer bei jedem Touch verlängern
         if (isDimmed) {
             ledcWrite(TFT_BL, getBrightPWM());
             isDimmed = false;
+            if (nachtModusEnabled) {
+                nachtOverride = true;
+                nachtOverrideUntil = millis() + 15000UL; // 15 Sekunden
+            }
             return;
         }
         // Pollen-Warnung bestätigen
@@ -742,6 +784,10 @@ void loadConfig() {
     brightnessPercent    = preferences.getInt("brightness",   80);
     brightnessPercent    = constrain(brightnessPercent, 10, 100);
     dimTimeoutMs = (dimTimeoutMin <= 0) ? 0 : (unsigned long)dimTimeoutMin * 60UL * 1000UL;
+    nachtModusEnabled    = preferences.getBool("nachtModus",  false);
+    nachtVon             = preferences.getInt("nachtVon",     22 * 60);
+    nachtBis             = preferences.getInt("nachtBis",      6 * 60);
+    nachtHelligkeit      = preferences.getInt("nachtHell",    0);
     Serial.printf("Config: regenWarn=%d pollenWarn=%d brightness=%d%% dimTime=%dmin\n",
         regenWarnungEnabled, pollenWarnungEnabled, brightnessPercent, dimTimeoutMin);
 }
@@ -757,8 +803,9 @@ void startConfigServer() {
     server.on("/update",        HTTP_GET, handleOTAPage);
     server.on("/update/check",  HTTP_GET, handleOTACheck);
     server.on("/update/install",HTTP_GET, handleOTAInstall);
-    server.on("/wifi/scan",     HTTP_GET, handleWifiScan);
-    server.on("/wifi/change",   HTTP_POST, handleWifiChange);
+    server.on("/wifi/scan",       HTTP_GET,  handleWifiScan);
+    server.on("/wifi/change",     HTTP_POST, handleWifiChange);
+    server.on("/location/change", HTTP_POST, handleLocationChange);
     server.begin();
     Serial.println("Config-Server: http://wettercube.local  |  /update fuer OTA");
 }
@@ -838,6 +885,31 @@ void handleConfig() {
     html += "<option value='10'" + String(dimTimeoutMin == 10 ? " selected" : "") + ">10 Minuten</option>";
     html += "</select></div></div>";
 
+    // --- Nachtmodus ---
+    html += "<div class='card'><h2>&#127769; Nachtmodus</h2>";
+    html += "<div class='row'><label>Nachtmodus aktiv</label>";
+    html += "<input type='checkbox' name='nachtModus' value='1'" + String(nachtModusEnabled ? chk : "") + "></div>";
+    // Von/Bis Dropdowns in 15-Min-Schritten
+    html += "<div class='row'><label>Display aus von</label><select name='nachtVon'>";
+    for (int m = 0; m < 24 * 60; m += 15) {
+        char buf[6]; snprintf(buf, sizeof(buf), "%02d:%02d", m / 60, m % 60);
+        html += "<option value='" + String(m) + "'" + String(m == nachtVon ? " selected" : "") + ">" + buf + "</option>";
+    }
+    html += "</select></div>";
+    html += "<div class='row'><label>Display an ab</label><select name='nachtBis'>";
+    for (int m = 0; m < 24 * 60; m += 15) {
+        char buf[6]; snprintf(buf, sizeof(buf), "%02d:%02d", m / 60, m % 60);
+        html += "<option value='" + String(m) + "'" + String(m == nachtBis ? " selected" : "") + ">" + buf + "</option>";
+    }
+    html += "</select></div>";
+    html += "<div class='row'><label>Helligkeit nachts</label>";
+    html += "<select name='nachtHell'>";
+    html += "<option value='0'"  + String(nachtHelligkeit == 0  ? " selected" : "") + ">Aus (0%)</option>";
+    html += "<option value='5'"  + String(nachtHelligkeit == 5  ? " selected" : "") + ">5%</option>";
+    html += "<option value='10'" + String(nachtHelligkeit == 10 ? " selected" : "") + ">10%</option>";
+    html += "<option value='20'" + String(nachtHelligkeit == 20 ? " selected" : "") + ">20%</option>";
+    html += "</select></div></div>";
+
     // --- Firmware Update ---
     html += "<div class='card'><h2>&#128257; Firmware</h2>";
     html += "<div class='row'><label>Installierte Version</label><span style='color:#58a6ff;font-weight:bold;'>" FIRMWARE_VERSION "</span></div>";
@@ -848,14 +920,25 @@ void handleConfig() {
     html += "<button type='submit'>&#10003; Speichern</button>";
     html += "</form>";
 
-    // --- WLAN wechseln (eigenes Formular, kein Teil der Config-Form) ---
+    // --- Standort ändern (eigenes Formular, außerhalb der Config-Form) ---
+    html += "<div class='card'><h2>&#127759; Standort</h2>";
+    html += "<div class='row'><label>Aktueller Standort</label><span style='color:#58a6ff;font-weight:bold;'>" + location + "</span></div>";
+    html += "<form action='/location/change' method='POST' style='margin-top:12px;'>";
+    html += "<input type='text' name='loc' placeholder='Neuer Stadtname (z.B. Berlin)' ";
+    html += "style='background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:5px;padding:8px 10px;";
+    html += "width:100%;max-width:420px;box-sizing:border-box;font-size:.95em;margin-bottom:8px;'>";
+    html += "<p style='font-size:.8em;color:#8b949e;margin-bottom:8px;'>Bei Umlauten ohne Punkte schreiben: Munchen statt M&uuml;nchen</p>";
+    html += "<button type='submit' style='background:#6e40c9;'>&#127759; Standort speichern &amp; Wetter neu laden</button>";
+    html += "</form></div>";
+
+    // --- WLAN wechseln (eigenes Formular, außerhalb der Config-Form) ---
     String curSsid = preferences.getString("ssid", "");
     html += "<div class='card'><h2>&#128246; WLAN wechseln</h2>";
     html += "<div class='row'><label>Aktuelles Netzwerk</label><span style='color:#58a6ff;font-weight:bold;'>" + curSsid + "</span></div>";
     html += "<form action='/wifi/change' method='POST' style='margin-top:12px;'>";
     html += "<label style='font-size:.85em;color:#8b949e;display:block;margin-bottom:4px;'>Neues Netzwerk</label>";
     html += "<select name='ssid' id='wifiSel' style='width:100%;max-width:420px;margin-bottom:10px;'>";
-    html += "<option value=''>-- Netzwerke laden... --</option>";
+    html += "<option value=''>-- Scan starten --</option>";
     html += "</select>";
     html += "<label style='font-size:.85em;color:#8b949e;display:block;margin-bottom:4px;'>Passwort</label>";
     html += "<input type='password' name='pass' placeholder='WLAN-Passwort' style='background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:5px;padding:8px 10px;width:100%;max-width:420px;box-sizing:border-box;font-size:.95em;margin-bottom:10px;'>";
@@ -876,7 +959,6 @@ void handleConfig() {
     html += "    });";
     html += "  }).catch(()=>{sel.innerHTML='<option>Fehler beim Scannen</option>';});";
     html += "}";
-    html += "scanWifi();";
     html += "</script>";
 
     html += "</body></html>";
@@ -911,6 +993,14 @@ void handleConfigSave() {
     preferences.putInt("pollenThresh", pollenSchwellwert);
     preferences.putInt("dimTime",      dimTimeoutMin);
     preferences.putInt("brightness",   brightnessPercent);
+    nachtModusEnabled = server.hasArg("nachtModus");
+    if (server.hasArg("nachtVon"))  nachtVon  = server.arg("nachtVon").toInt();
+    if (server.hasArg("nachtBis"))  nachtBis  = server.arg("nachtBis").toInt();
+    if (server.hasArg("nachtHell")) nachtHelligkeit = server.arg("nachtHell").toInt();
+    preferences.putBool("nachtModus", nachtModusEnabled);
+    preferences.putInt("nachtVon",    nachtVon);
+    preferences.putInt("nachtBis",    nachtBis);
+    preferences.putInt("nachtHell",   nachtHelligkeit);
 
     Serial.println("Config gespeichert.");
 
@@ -1078,4 +1168,38 @@ void handleWifiChange() {
         "</body></html>");
     delay(1500);
     ESP.restart();
+}
+
+void handleLocationChange() {
+    String loc = server.arg("loc");
+    loc.trim();
+    if (loc.length() < 2) {
+        server.send(400, "text/plain", "Stadtname zu kurz");
+        return;
+    }
+    location = loc;
+    preferences.putString("location", loc);
+    // Koordinaten zurücksetzen → geocodeLocation() wird beim nächsten Wetter-Abruf ausgelöst
+    latitude = 0.0; longitude = 0.0;
+    preferences.putFloat("lat", 0.0);
+    preferences.putFloat("lon", 0.0);
+
+    server.send(200, "text/html",
+        "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+        "<meta http-equiv='refresh' content='3;url=/config'>"
+        "<style>body{font-family:Arial;background:#0d1117;color:#e6edf3;text-align:center;padding:60px;}"
+        "h2{color:#3fb950;}</style></head><body>"
+        "<h2>&#10003; Standort gespeichert!</h2>"
+        "<p>Neuer Standort: <b>" + loc + "</b></p>"
+        "<p>Wetter wird beim n&auml;chsten Abruf aktualisiert...</p>"
+        "</body></html>");
+
+    // Sofort neu geocoden und Wetter laden
+    if (WiFi.status() == WL_CONNECTED) {
+        if (geocodeLocation(location)) {
+            preferences.putFloat("lat", latitude);
+            preferences.putFloat("lon", longitude);
+        }
+        lastWeatherUpdate = 0; // Sofortiger Wetter-Abruf im nächsten loop()
+    }
 }

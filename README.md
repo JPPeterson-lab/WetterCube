@@ -24,6 +24,8 @@ kein API-Key nötig.
 - **Touch-Taste** TTP223 kapazitiver Touch-Sensor zum Durchschalten der Screens und Quittieren von Warnungen
 - **Captive-Portal-Setup:** WLAN + Standort bequem per Browser einstellen
 - **WLAN-Wechsel im Web-UI:** Netzwerk jederzeit unter `http://wettercube.local` wechseln – kein Captive Portal nötig
+- **Standortwechsel im Web-UI:** Wetterort direkt im Browser ändern – Cube geocodiert und lädt sofort neu
+- **Nachtmodus:** Display zu konfigurierbaren Zeiten automatisch dimmen oder abschalten; Touch weckt für 15 Sekunden
 - **Regen-Warnung** Roter Screen blinkt 60 Min bevor der angesagte Regen eintreten soll, wird durch Touch-Berührung quittiert
 - **Pollen-Warnscreen** Orangener Screen blinkt bei Belastung Hoch (>30) oder Sehr hoch (>100), wird durch Touch-Berührung quittiert oder setzt sich selbst zurück bei Belastung <30
 - **Automatisches Dimmen** Nach 3 Min automatisches Dimmen bis die Touch-Funktion genutzt wird
@@ -228,6 +230,8 @@ Weather data is provided free of charge by [Open-Meteo](https://open-meteo.com) 
 - **Touch button** TTP223 capacitive touch sensor for switching screens and acknowledging warnings
 - **Captive Portal Setup:** Configure Wi-Fi and location conveniently through a web browser
 - **Wi-Fi Change via Web UI:** Switch networks anytime at `http://wettercube.local` – no captive portal needed
+- **Location Change via Web UI:** Update the weather location directly in the browser – cube geocodes and reloads instantly
+- **Night Mode:** Automatically dim or turn off the display during configurable hours; touch wakes it for 15 seconds
 - **Rain Warning:** A red warning screen flashes up to 60 minutes before forecasted rainfall – acknowledged via touch
 - **Pollen Warning:** An orange warning screen flashes when pollen levels are High (>30) or Very High (>100) – acknowledged via touch or resets automatically when levels drop
 - **Automatic Dimming:** Display dims after 3 minutes of inactivity, wakes on touch
