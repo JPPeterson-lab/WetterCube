@@ -4,6 +4,13 @@ Alle relevanten Änderungen je Version. Neueste Version zuerst.
 
 ---
 
+## [1.7.3] – 2026-06-29
+
+### Behoben
+- **Ortsnamen mit Leerzeichen** (z.B. "Bad Schwartau") wurden nicht korrekt geocodiert – Leerzeichen werden jetzt als `%20` URL-enkodiert
+
+---
+
 ## [1.7.2] – 2026-06-19
 
 ### Behoben

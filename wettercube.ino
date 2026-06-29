@@ -13,7 +13,7 @@
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.7.2"
+#define FIRMWARE_VERSION     "1.7.3"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/WetterCube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/WetterCube/firmware/firmware.bin"
 
@@ -448,8 +448,10 @@ void showBootScreen() {
 
 bool geocodeLocation(const String& city) {
     HTTPClient http;
+    String encoded = city;
+    encoded.replace(" ", "%20");
     String url = "https://geocoding-api.open-meteo.com/v1/search?name=";
-    url += city;
+    url += encoded;
     url += "&count=1&language=de&format=json";
 
     Serial.print("Geocoding: "); Serial.println(url);

@@ -236,6 +236,8 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 | 1.6.2 | Crash-Fix: LVGL-Animation vor HTTP-Calls abwarten, Pollen-Warnung NULL-gesichert |
 | 1.7.0 | WLAN-Wechsel im Web-UI, Custom Partition Table (SPIFFS entfernt, App 2MB), lv_conf.h projektlokal via build_opt.h |
 | 1.7.1 | Bugfix: Nachtmodus Touch-Wake (15s Timer), Config-Hang durch WLAN-Auto-Scan behoben, Standort-Formular-Fix |
+| 1.7.2 | OTA-URLs auf korrekten GitHub Pages Pfad (WetterCube) korrigiert |
+| 1.7.3 | Bugfix: Ortsnamen mit Leerzeichen (URL-Enkodierung %20 für Geocoding) |
 
 ---
 
