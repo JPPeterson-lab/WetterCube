@@ -413,6 +413,8 @@ void showBootScreen() {
         return;
     }
 
+    WiFi.disconnect(true);
+    delay(100);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), pass.c_str());
     lv_bar_set_value(uic_BarWifi, 20, LV_ANIM_ON);
