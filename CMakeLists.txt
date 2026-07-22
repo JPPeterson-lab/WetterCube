@@ -18,6 +18,8 @@ SET(SOURCES ui_comp_imagewetter.c
     ui_img_fog_png.c
     ui_img_overcast_png.c
     ui_img_snow_png.c
+    ui_img_day_partial_cloud_png.c
+    ui_img_night_full_moon_clear_png.c
     ui_img_rain_80x80_png.c
     ui_img_alert_png.c)
 

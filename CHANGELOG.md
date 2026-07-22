@@ -4,6 +4,19 @@ Alle relevanten Änderungen je Version. Neueste Version zuerst.
 
 ---
 
+## [1.7.4] – 2026-07-22
+
+### Neu
+- **Wetter-Icon: teilweise bewölkt** – WMO-Code 2 zeigt jetzt ein eigenes Icon (`day_partial_cloud`)
+- **Wetter-Icon: Nacht klarer Himmel** – WMO-Code 0/1 zwischen 23:00 und 04:59 Uhr zeigt Mondicon (`night_full_moon_clear`) statt Sonnensymbol
+
+### Behoben
+- **HTTPS-Verbindungen** – Geocoding, Wetterdaten und Pollendaten nutzen jetzt durchgehend `WiFiClientSecure` mit `setInsecure()`. Betrifft alle Geräte die nach einem NVS-Reset neu geocodiert werden müssen (zuvor schlugen HTTPS-Calls mit HTTP -1 fehl)
+- **LVGL-Heap vs. SSL-Heap** – `LV_MEM_SIZE` von 128 KB auf 96 KB reduziert; gibt ~32 KB mehr Heap für SSL-Handshake frei, Icons und Farben bleiben erhalten
+- **Watchdog durch blockierendes `getLocalTime()`** – alle `getLocalTime()`-Aufrufe außerhalb von NTP-Init nutzen jetzt Timeout 0 (kein Warten auf NTP-Sync)
+
+---
+
 ## [1.7.3] – 2026-06-29
 
 ### Behoben

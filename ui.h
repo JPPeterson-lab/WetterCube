@@ -50,6 +50,8 @@ LV_IMG_DECLARE( ui_img_thunder_png);   // assets/thunder.png
 LV_IMG_DECLARE( ui_img_fog_png);   // assets/fog.png
 LV_IMG_DECLARE( ui_img_overcast_png);   // assets/overcast.png
 LV_IMG_DECLARE( ui_img_snow_png);   // assets/snow.png
+LV_IMG_DECLARE( ui_img_day_partial_cloud_png);   // assets/day_partial_cloud.png
+LV_IMG_DECLARE( ui_img_night_full_moon_clear_png);   // assets/night_full_moon_clear.png
 LV_IMG_DECLARE( ui_img_rain_80x80_png);   // assets/rain_80x80.png
 LV_IMG_DECLARE( ui_img_alert_png);   // assets/alert.png
 

@@ -20,6 +20,8 @@ extern lv_obj_t *ui_fog;
 extern lv_obj_t *ui_overcast;
 extern lv_obj_t *ui_snow;
 extern lv_obj_t *ui_dayclear;
+extern lv_obj_t *ui_daypartialcloud;
+extern lv_obj_t *ui_nightfullmoonclear;
 // CUSTOM VARIABLES
 extern lv_obj_t *uic_ScreenLager;
 extern lv_obj_t *uic_rain;
@@ -28,6 +30,8 @@ extern lv_obj_t *uic_fog;
 extern lv_obj_t *uic_overcast;
 extern lv_obj_t *uic_snow;
 extern lv_obj_t *uic_dayclear;
+extern lv_obj_t *uic_daypartialcloud;
+extern lv_obj_t *uic_nightfullmoonclear;
 
 #ifdef __cplusplus
 } /*extern "C"*/

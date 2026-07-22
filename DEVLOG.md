@@ -295,3 +295,35 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - Jetzt eigenes Formular außerhalb des Config-Formulars
 
 *Zuletzt aktualisiert: Juni 2026*
+
+---
+
+## v1.7.2 – OTA-URL-Fix & v1.7.3 – Geocoding URL-Encoding
+
+- OTA-URLs auf korrekten GitHub Pages Pfad (`WetterCube` mit Großbuchstabe) korrigiert
+- Geocoding: Städtenamen mit Leerzeichen (z.B. "Bad Schwartau") per `%20` URL-kodiert
+
+---
+
+## v1.7.4 – Neue Wetter-Icons, HTTPS-Fix, Heap-Optimierung
+
+### Neue Icons
+- **WMO 2 → `day_partial_cloud`**: Eigenes Icon für leicht bewölkt (statt overcast)
+- **WMO 0/1 nachts (23:00–04:59) → `night_full_moon_clear`**: Mondicon statt Sonnensymbol
+- WMO 3 bleibt `overcast`
+
+### HTTPS mit WiFiClientSecure (wichtiger Bugfix)
+- `HTTPClient::begin(url)` für HTTPS-URLs schlug mit HTTP -1 fehl in aktuellen Board-Package-Versionen
+- Geocoding, Wetter und Pollen nutzen jetzt `WiFiClientSecure client; client.setInsecure(); http.begin(client, url)`
+- Betrifft alle Geräte nach NVS-Reset (zuvor: Koordinaten aus Cache → Geocoding nie aufgerufen → Fehler unsichtbar)
+
+### LVGL-Heap vs. SSL-Heap
+- `LV_MEM_SIZE` von 128 KB auf 96 KB reduziert
+- 128 KB ließ nur ~50 KB freien Heap → WiFiClientSecure SSL-Handshake fehlgeschlagen
+- 96 KB → ~82 KB freier Heap → SSL funktioniert, Icons und Farben bleiben vollständig erhalten
+
+### getLocalTime() Watchdog-Fix
+- `getLocalTime()` ohne Timeout blockiert bis zu 5 Sekunden auf NTP-Sync
+- Alle Aufrufe außerhalb NTP-Init nutzen jetzt `getLocalTime(&ti, 0)` (sofortiger Rückgabe)
+
+*Zuletzt aktualisiert: Juli 2026*

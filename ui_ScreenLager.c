@@ -5,6 +5,8 @@
 
 #include "ui.h"
 
+lv_obj_t *uic_nightfullmoonclear;
+lv_obj_t *uic_daypartialcloud;
 lv_obj_t *uic_dayclear;
 lv_obj_t *uic_snow;
 lv_obj_t *uic_overcast;
@@ -12,7 +14,7 @@ lv_obj_t *uic_fog;
 lv_obj_t *uic_thunder;
 lv_obj_t *uic_rain;
 lv_obj_t *uic_ScreenLager;
-lv_obj_t *ui_ScreenLager = NULL;lv_obj_t *ui_rain = NULL;lv_obj_t *ui_thunder = NULL;lv_obj_t *ui_fog = NULL;lv_obj_t *ui_overcast = NULL;lv_obj_t *ui_snow = NULL;lv_obj_t *ui_dayclear = NULL;
+lv_obj_t *ui_ScreenLager = NULL;lv_obj_t *ui_rain = NULL;lv_obj_t *ui_thunder = NULL;lv_obj_t *ui_fog = NULL;lv_obj_t *ui_overcast = NULL;lv_obj_t *ui_snow = NULL;lv_obj_t *ui_dayclear = NULL;lv_obj_t *ui_daypartialcloud = NULL;lv_obj_t *ui_nightfullmoonclear = NULL;
 // event funtions
 
 // build funtions
@@ -70,6 +72,22 @@ lv_obj_set_align( ui_dayclear, LV_ALIGN_CENTER );
 lv_obj_add_flag( ui_dayclear, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
 lv_obj_clear_flag( ui_dayclear, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 
+ui_daypartialcloud = lv_img_create(ui_ScreenLager);
+lv_img_set_src(ui_daypartialcloud, &ui_img_day_partial_cloud_png);
+lv_obj_set_width( ui_daypartialcloud, LV_SIZE_CONTENT);  /// 40
+lv_obj_set_height( ui_daypartialcloud, LV_SIZE_CONTENT);   /// 40
+lv_obj_set_align( ui_daypartialcloud, LV_ALIGN_CENTER );
+lv_obj_add_flag( ui_daypartialcloud, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
+lv_obj_clear_flag( ui_daypartialcloud, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+
+ui_nightfullmoonclear = lv_img_create(ui_ScreenLager);
+lv_img_set_src(ui_nightfullmoonclear, &ui_img_night_full_moon_clear_png);
+lv_obj_set_width( ui_nightfullmoonclear, LV_SIZE_CONTENT);  /// 40
+lv_obj_set_height( ui_nightfullmoonclear, LV_SIZE_CONTENT);   /// 40
+lv_obj_set_align( ui_nightfullmoonclear, LV_ALIGN_CENTER );
+lv_obj_add_flag( ui_nightfullmoonclear, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
+lv_obj_clear_flag( ui_nightfullmoonclear, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+
 uic_ScreenLager = ui_ScreenLager;
 uic_rain = ui_rain;
 uic_thunder = ui_thunder;
@@ -77,6 +95,8 @@ uic_fog = ui_fog;
 uic_overcast = ui_overcast;
 uic_snow = ui_snow;
 uic_dayclear = ui_dayclear;
+uic_daypartialcloud = ui_daypartialcloud;
+uic_nightfullmoonclear = ui_nightfullmoonclear;
 
 }
 
@@ -99,5 +119,9 @@ uic_snow= NULL;
 ui_snow= NULL;
 uic_dayclear= NULL;
 ui_dayclear= NULL;
+uic_daypartialcloud= NULL;
+ui_daypartialcloud= NULL;
+uic_nightfullmoonclear= NULL;
+ui_nightfullmoonclear= NULL;
 
 }

@@ -13,7 +13,7 @@
 #include <Update.h>
 #include <ui.h>
 
-#define FIRMWARE_VERSION     "1.7.3"
+#define FIRMWARE_VERSION     "1.7.4"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/WetterCube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/WetterCube/firmware/firmware.bin"
 
@@ -172,7 +172,8 @@ void loop() {
 
     // --- Nachtmodus (zeitbasiert) ---
     if (nachtModusEnabled) {
-        struct tm ti; getLocalTime(&ti);
+        struct tm ti = {};
+        if (!getLocalTime(&ti, 0)) ti.tm_hour = ti.tm_min = 0;
         int nowMin = ti.tm_hour * 60 + ti.tm_min;
         bool inNight;
         if (nachtVon < nachtBis) {
@@ -447,6 +448,8 @@ void showBootScreen() {
 // --- GEOCODING (Stadtname → Koordinaten) ---
 
 bool geocodeLocation(const String& city) {
+    WiFiClientSecure geoClient;
+    geoClient.setInsecure();
     HTTPClient http;
     String encoded = city;
     encoded.replace(" ", "%20");
@@ -455,7 +458,7 @@ bool geocodeLocation(const String& city) {
     url += "&count=1&language=de&format=json";
 
     Serial.print("Geocoding: "); Serial.println(url);
-    http.begin(url);
+    http.begin(geoClient, url);
     int httpCode = http.GET();
 
     if (httpCode == 200) {
@@ -510,6 +513,8 @@ void fetchWeather() {
         if (!geocodeLocation(location)) return;
     }
 
+    WiFiClientSecure wxClient;
+    wxClient.setInsecure();
     HTTPClient http;
     String url = "https://api.open-meteo.com/v1/forecast";
     url += "?latitude="  + String(latitude, 4);
@@ -520,7 +525,7 @@ void fetchWeather() {
     url += "&wind_speed_unit=kmh&timezone=auto&forecast_days=2";
 
     Serial.print("Wetter-URL: "); Serial.println(url);
-    http.begin(url);
+    http.begin(wxClient, url);
     int httpCode = http.GET();
 
     if (httpCode == 200) {
@@ -642,6 +647,8 @@ void fetchPollen() {
     if (WiFi.status() != WL_CONNECTED) return;
     if (latitude == 0.0 && longitude == 0.0) return;
 
+    WiFiClientSecure pollenClient;
+    pollenClient.setInsecure();
     HTTPClient http;
     String url = "https://air-quality-api.open-meteo.com/v1/air-quality";
     url += "?latitude="  + String(latitude, 4);
@@ -650,7 +657,7 @@ void fetchPollen() {
     url += "&timezone=auto&forecast_days=1";
 
     Serial.print("Pollen-URL: "); Serial.println(url);
-    http.begin(url);
+    http.begin(pollenClient, url);
     int httpCode = http.GET();
 
     if (httpCode == 200) {
@@ -716,8 +723,13 @@ void fetchPollen() {
 
 void setWeatherIcon(lv_obj_t* img, int wmoCode) {
     if (wmoCode == 0 || wmoCode == 1) {
-        lv_img_set_src(img, &ui_img_day_clear_png);
-    } else if (wmoCode == 2 || wmoCode == 3) {
+        struct tm ti = {};
+        bool isNight = false;
+        if (getLocalTime(&ti, 0)) isNight = (ti.tm_hour >= 23 || ti.tm_hour < 5);
+        lv_img_set_src(img, isNight ? &ui_img_night_full_moon_clear_png : &ui_img_day_clear_png);
+    } else if (wmoCode == 2) {
+        lv_img_set_src(img, &ui_img_day_partial_cloud_png);
+    } else if (wmoCode == 3) {
         lv_img_set_src(img, &ui_img_overcast_png);
     } else if (wmoCode == 45 || wmoCode == 48) {
         lv_img_set_src(img, &ui_img_fog_png);
