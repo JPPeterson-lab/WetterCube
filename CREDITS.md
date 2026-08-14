@@ -27,6 +27,13 @@ Gemäß CC BY-SA 4.0 gilt:
 
 ---
 
+## UI-Design
+
+Das Interface wurde mit [PicoPixel](https://picopixel.io) erstellt, einem browserbasierten
+Editor für LVGL-Oberflächen. Bis Version 1.7.4 kam SquareLine Studio zum Einsatz.
+
+---
+
 ## Wetterdaten
 
 **Quelle:** [Open-Meteo](https://open-meteo.com)

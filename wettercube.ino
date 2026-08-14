@@ -11,9 +11,11 @@
 #include <DNSServer.h>
 #include <WiFiClientSecure.h>
 #include <Update.h>
-#include <ui.h>
+#include "ui.h"
+#include "images.h"
+#include "colors.h"
 
-#define FIRMWARE_VERSION     "1.7.4"
+#define FIRMWARE_VERSION     "1.8.0"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/WetterCube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/WetterCube/firmware/firmware.bin"
 
@@ -63,6 +65,7 @@ bool screen5Enabled       = true;
 int  pollenSchwellwert    = 30;
 int  dimTimeoutMin        = 3;
 int  brightnessPercent    = 80;   // 10–100%, konfigurierbar per Webinterface
+bool darkThemeEnabled     = true; // Design: Dunkel/Hell, konfigurierbar per Webinterface
 
 // --- NACHTMODUS ---
 bool nachtModusEnabled  = false;
@@ -146,7 +149,9 @@ void setup() {
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
 
-    ui_init();
+    lv_theme_t *theme = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), false, LV_FONT_DEFAULT);
+    lv_disp_set_theme(lv_disp_get_default(), theme);
+    create_screens();
 
     // Daten aus dem Flash-Speicher laden
     preferences.begin("wettercube", false);
@@ -154,6 +159,7 @@ void setup() {
     latitude  = preferences.getFloat("lat", 0.0);
     longitude = preferences.getFloat("lon", 0.0);
     loadConfig();
+    change_color_theme(darkThemeEnabled ? THEME_DARK : THEME_LIGHT);
 
     showBootScreen(); // verbindet WLAN via WiFiManager, startet mDNS + Config-Server
 
@@ -209,7 +215,7 @@ void loop() {
     if (pollenWarnungAktiv && millis() - lastPollenBlink >= 500) {
         lastPollenBlink = millis();
         pollenBlinkState = !pollenBlinkState;
-        lv_obj_set_style_bg_color(ui_uiScreenWarnungPollen,
+        lv_obj_set_style_bg_color(objects.uiscreenwarnungpollen,
             pollenBlinkState ? lv_color_hex(0xFF8800) : lv_color_hex(0xCC5500),
             LV_PART_MAIN | LV_STATE_DEFAULT);
     }
@@ -218,7 +224,7 @@ void loop() {
     if (regenWarnungAktiv && millis() - lastBlinkTime >= 500) {
         lastBlinkTime = millis();
         blinkState = !blinkState;
-        lv_obj_set_style_bg_color(ui_uiScreenWarnung,
+        lv_obj_set_style_bg_color(objects.uiscreenwarnung,
             blinkState ? lv_color_hex(0xCC0000) : lv_color_hex(0x660000),
             LV_PART_MAIN | LV_STATE_DEFAULT);
     }
@@ -257,7 +263,7 @@ void checkTouchButton() {
                 lastTouchTime = millis();
                 pollenWarnungAktiv = false;
                 pollenWarnungBestaetigt = true;
-                lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+                lv_scr_load_anim(objects.screen1, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
                 currentScreen = 1;
             }
             return;
@@ -268,7 +274,7 @@ void checkTouchButton() {
                 lastTouchTime = millis();
                 regenWarnungAktiv = false;
                 regenWarnungBestaetigt = true;
-                lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+                lv_scr_load_anim(objects.screen1, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
                 currentScreen = 1;
             }
             return;
@@ -288,7 +294,7 @@ void checkTouchButton() {
                 if (enabled[ni]) { nextScreen = order[ni]; break; }
             }
             // Screen laden
-            lv_obj_t* screens[] = {nullptr, ui_Screen1, ui_Screen2, ui_Screen3, ui_Screen4, ui_ScreenPollen};
+            lv_obj_t* screens[] = {nullptr, objects.screen1, objects.screen2, objects.screen3, objects.screen4, objects.screenpollen};
             lv_scr_load_anim_t animDir = (nextScreen == 1 && curIdx >= 1) ? LV_SCR_LOAD_ANIM_MOVE_RIGHT : LV_SCR_LOAD_ANIM_MOVE_LEFT;
             if (nextScreen >= 1 && nextScreen <= 5) {
                 lv_scr_load_anim(screens[nextScreen], animDir, 300, 0, false);
@@ -371,8 +377,8 @@ void handlePortalSave() {
 }
 
 void runCaptivePortal() {
-    lv_label_set_text(uic_LabelStatus, "Portal: WetterCube-Setup");
-    lv_bar_set_value(uic_BarWifi, 30, LV_ANIM_ON);
+    lv_label_set_text(objects.labelstatus, "Portal: WetterCube-Setup");
+    lv_bar_set_value(objects.barwifi, 30, LV_ANIM_ON);
     lv_timer_handler();
 
     WiFi.mode(WIFI_AP_STA);
@@ -392,16 +398,16 @@ void runCaptivePortal() {
         delay(5);
     }
 
-    lv_label_set_text(uic_LabelStatus, "Timeout - Neustart...");
+    lv_label_set_text(objects.labelstatus, "Timeout - Neustart...");
     lv_timer_handler();
     delay(2000);
     ESP.restart();
 }
 
 void showBootScreen() {
-    lv_disp_load_scr(ui_ScreenBoot);
-    lv_bar_set_value(uic_BarWifi, 0, LV_ANIM_OFF);
-    lv_label_set_text(uic_LabelStatus, "Verbinde mit WLAN...");
+    lv_disp_load_scr(objects.screenboot);
+    lv_bar_set_value(objects.barwifi, 0, LV_ANIM_OFF);
+    lv_label_set_text(objects.labelstatus, "Verbinde mit WLAN...");
     lv_timer_handler();
 
     location = preferences.getString("location", "");
@@ -417,7 +423,7 @@ void showBootScreen() {
     delay(100);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), pass.c_str());
-    lv_bar_set_value(uic_BarWifi, 20, LV_ANIM_ON);
+    lv_bar_set_value(objects.barwifi, 20, LV_ANIM_ON);
     lv_timer_handler();
 
     unsigned long t = millis();
@@ -431,16 +437,16 @@ void showBootScreen() {
         return;
     }
 
-    lv_bar_set_value(uic_BarWifi, 100, LV_ANIM_ON);
+    lv_bar_set_value(objects.barwifi, 100, LV_ANIM_ON);
     String ipStr = "Verbunden!  IP: " + WiFi.localIP().toString();
-    lv_label_set_text(uic_LabelStatus, ipStr.c_str());
+    lv_label_set_text(objects.labelstatus, ipStr.c_str());
     lv_timer_handler();
 
     if (MDNS.begin("wettercube")) Serial.println("mDNS: http://wettercube.local");
     startConfigServer();
 
     delay(5000);
-    lv_scr_load_anim(ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+    lv_scr_load_anim(objects.screen1, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
     currentScreen = 1;
     // Animation vollständig abwarten bevor HTTP-Calls starten
     unsigned long animEnd = millis() + 600;
@@ -538,47 +544,47 @@ void fetchWeather() {
         JsonObject current = doc["current"];
 
         float temp = current["temperature_2m"].as<float>();
-        lv_label_set_text(ui_LabelTemp, (String((int)round(temp)) + "°C").c_str());
+        lv_label_set_text(objects.labeltemp, (String((int)round(temp)) + "°C").c_str());
 
-        setTempColor(ui_LabelTemp, temp);
+        setTempColor(objects.labeltemp, temp);
 
         int humidity = current["relative_humidity_2m"].as<int>();
-        lv_label_set_text(ui_LabelHum, (String(humidity) + "%").c_str());
+        lv_label_set_text(objects.labelhum, (String(humidity) + "%").c_str());
 
         float feelsLike = current["apparent_temperature"].as<float>();
-        lv_label_set_text(ui_LabelFeelsLike, (String((int)round(feelsLike)) + "°C").c_str());
+        lv_label_set_text(objects.labelfeelslike, (String((int)round(feelsLike)) + "°C").c_str());
 
         float wind = current["wind_speed_10m"].as<float>();  // bereits in km/h
-        lv_label_set_text(ui_LabelWind, (String((int)round(wind)) + " km/h").c_str());
+        lv_label_set_text(objects.labelwind, (String((int)round(wind)) + " km/h").c_str());
 
         int windDeg = current["wind_direction_10m"].as<int>();
-        lv_label_set_text(uic_LabelWindDir, getWindDirection(windDeg).c_str());
+        lv_label_set_text(objects.labelwinddir, getWindDirection(windDeg).c_str());
 
         int pressure = current["surface_pressure"].as<int>();
-        lv_label_set_text(ui_LabelPress, (String(pressure) + " hPa").c_str());
+        lv_label_set_text(objects.labelpress, (String(pressure) + " hPa").c_str());
 
         int wmoCode = current["weather_code"].as<int>();
         updateWeatherIcon(wmoCode);
 
         // --- Screen 3: UV-Index, Sonnenaufgang, Sonnenuntergang ---
         float uvMax = doc["daily"]["uv_index_max"][0].as<float>();
-        lv_label_set_text(uic_LabelUV, String((int)round(uvMax)).c_str());
+        lv_label_set_text(objects.labeluv, String((int)round(uvMax)).c_str());
 
         String sunriseRaw  = doc["daily"]["sunrise"][0].as<String>();
         String sunsetRaw   = doc["daily"]["sunset"][0].as<String>();
         String sunriseTime = (sunriseRaw.length()  >= 16) ? sunriseRaw.substring(11, 16)  : "--:--";
         String sunsetTime  = (sunsetRaw.length()   >= 16) ? sunsetRaw.substring(11, 16)   : "--:--";
-        lv_label_set_text(uic_LabelAufgang,   sunriseTime.c_str());
-        lv_label_set_text(uic_LabelUntergang, sunsetTime.c_str());
+        lv_label_set_text(objects.labelaufgang,   sunriseTime.c_str());
+        lv_label_set_text(objects.labeluntergang, sunsetTime.c_str());
 
         // --- Screen 4: Stündliche Vorhersage ---
         struct tm timeinfo;
         if (getLocalTime(&timeinfo)) {
             int h = timeinfo.tm_hour;
 
-            lv_obj_t* zeitLabels[3] = { uic_LabelH1Zeit, uic_LabelH2Zeit, uic_LabelH3Zeit };
-            lv_obj_t* tempLabels[3] = { uic_LabelH1Temp, uic_LabelH2Temp, uic_LabelH3Temp };
-            lv_obj_t* icons[3]      = { uic_ImageH1,     uic_ImageH2,     uic_ImageH3     };
+            lv_obj_t* zeitLabels[3] = { objects.labelh1zeit, objects.labelh2zeit, objects.labelh3zeit };
+            lv_obj_t* tempLabels[3] = { objects.labelh1temp, objects.labelh2temp, objects.labelh3temp };
+            lv_obj_t* icons[3]      = { objects.imageh1,     objects.imageh2,     objects.imageh3     };
 
             for (int i = 0; i < 3; i++) {
                 int idx = h + 1 + i; // max 23+3=26, liegt sicher in 48h-Array
@@ -608,8 +614,8 @@ void fetchWeather() {
             if (!regenKommt) regenWarnungBestaetigt = false; // Reset für nächste Warnung
             if (regenKommt && regenWarnungEnabled && !regenWarnungBestaetigt && !regenWarnungAktiv) {
                 regenWarnungAktiv = true;
-                if (ui_uiScreenWarnung != nullptr) {
-                    lv_scr_load(ui_uiScreenWarnung);
+                if (objects.uiscreenwarnung != nullptr) {
+                    lv_scr_load(objects.uiscreenwarnung);
                     currentScreen = 99;
                 }
             }
@@ -677,11 +683,11 @@ void fetchPollen() {
         float beifuss  = doc["hourly"]["mugwort_pollen"][h].as<float>();
         float ambrosia = doc["hourly"]["ragweed_pollen"][h].as<float>();
 
-        setPollenLabel(uic_LabelBirkeWert,    birke);
-        setPollenLabel(uic_LabelGraeserWert,  graeser);
-        setPollenLabel(uic_LabelErleWert,     erle);
-        setPollenLabel(uic_LabelBeifussWert,  beifuss);
-        setPollenLabel(uic_LabelAmbrosiaWert, ambrosia);
+        setPollenLabel(objects.labelbirkewert,    birke);
+        setPollenLabel(objects.labelgraeserwert,  graeser);
+        setPollenLabel(objects.labelerlewert,     erle);
+        setPollenLabel(objects.labelbeifusswert,  beifuss);
+        setPollenLabel(objects.labelambrosiawert, ambrosia);
 
         Serial.printf("Pollen OK: Birke %.1f, Graeser %.1f, Erle %.1f, Beifuss %.1f, Ambrosia %.1f\n",
                       birke, graeser, erle, beifuss, ambrosia);
@@ -709,10 +715,10 @@ void fetchPollen() {
         }
         if (warnText != "" && pollenWarnungEnabled && !pollenWarnungBestaetigt && !pollenWarnungAktiv) {
             pollenWarnungAktiv = true;
-            lv_scr_load(ui_uiScreenWarnungPollen);
+            lv_scr_load(objects.uiscreenwarnungpollen);
             currentScreen = 98;
-            if (uic_LabelPollenWarnArt != nullptr)
-                lv_label_set_text(uic_LabelPollenWarnArt, warnText.c_str());
+            if (objects.labelpollenwarnart != nullptr)
+                lv_label_set_text(objects.labelpollenwarnart, warnText.c_str());
         }
     } else {
         Serial.printf("Pollen-Fehler: HTTP %d\n", httpCode);
@@ -728,28 +734,32 @@ void setWeatherIcon(lv_obj_t* img, int wmoCode) {
         struct tm ti = {};
         bool isNight = false;
         if (getLocalTime(&ti, 0)) isNight = (ti.tm_hour >= 23 || ti.tm_hour < 5);
-        lv_img_set_src(img, isNight ? &ui_img_night_full_moon_clear_png : &ui_img_day_clear_png);
+        lv_img_set_src(img, isNight ? &night_full_moon_clear : &day_clear);
     } else if (wmoCode == 2) {
-        lv_img_set_src(img, &ui_img_day_partial_cloud_png);
+        lv_img_set_src(img, &day_partial_cloud);
     } else if (wmoCode == 3) {
-        lv_img_set_src(img, &ui_img_overcast_png);
-    } else if (wmoCode == 45 || wmoCode == 48) {
-        lv_img_set_src(img, &ui_img_fog_png);
-    } else if ((wmoCode >= 51 && wmoCode <= 67) ||
+        lv_img_set_src(img, &overcast);
+    } else if (wmoCode == 45) {
+        lv_img_set_src(img, &mist);
+    } else if (wmoCode == 48) {
+        lv_img_set_src(img, &fog);
+    } else if (wmoCode >= 51 && wmoCode <= 57) {
+        lv_img_set_src(img, &day_rain);
+    } else if ((wmoCode >= 61 && wmoCode <= 67) ||
                (wmoCode >= 80 && wmoCode <= 82)) {
-        lv_img_set_src(img, &ui_img_rain_png);
+        lv_img_set_src(img, &rain);
     } else if ((wmoCode >= 71 && wmoCode <= 77) ||
                wmoCode == 85 || wmoCode == 86) {
-        lv_img_set_src(img, &ui_img_snow_png);
+        lv_img_set_src(img, &snow);
     } else if (wmoCode >= 95) {
-        lv_img_set_src(img, &ui_img_thunder_png);
+        lv_img_set_src(img, &thunder);
     } else {
-        lv_img_set_src(img, &ui_img_overcast_png);
+        lv_img_set_src(img, &overcast);
     }
 }
 
 void updateWeatherIcon(int wmoCode) {
-    setWeatherIcon(ui_ImageWetter, wmoCode);
+    setWeatherIcon(objects.imagewetter, wmoCode);
 }
 
 void setTempColor(lv_obj_t* label, float temp) {
@@ -772,7 +782,7 @@ void updateClock() {
 
     char zeitPuffer[10];
     sprintf(zeitPuffer, "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
-    lv_label_set_text(ui_LabelUhr, zeitPuffer);
+    lv_label_set_text(objects.labeluhr, zeitPuffer);
 
     const char* wochentage[] = {"So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."};
     char datumsPuffer[32];
@@ -781,7 +791,7 @@ void updateClock() {
         timeinfo.tm_mday,
         timeinfo.tm_mon + 1,
         timeinfo.tm_year + 1900);
-    lv_label_set_text(ui_uiLabelDatum, datumsPuffer);
+    lv_label_set_text(objects.uilabeldatum, datumsPuffer);
 }
 
 // =============================================================================
@@ -804,6 +814,7 @@ void loadConfig() {
     nachtVon             = preferences.getInt("nachtVon",     22 * 60);
     nachtBis             = preferences.getInt("nachtBis",      6 * 60);
     nachtHelligkeit      = preferences.getInt("nachtHell",    0);
+    darkThemeEnabled     = preferences.getBool("darkTheme",   true);
     Serial.printf("Config: regenWarn=%d pollenWarn=%d brightness=%d%% dimTime=%dmin\n",
         regenWarnungEnabled, pollenWarnungEnabled, brightnessPercent, dimTimeoutMin);
 }
@@ -899,6 +910,11 @@ void handleConfig() {
     html += "<option value='3'"  + String(dimTimeoutMin == 3  ? " selected" : "") + ">3 Minuten</option>";
     html += "<option value='5'"  + String(dimTimeoutMin == 5  ? " selected" : "") + ">5 Minuten</option>";
     html += "<option value='10'" + String(dimTimeoutMin == 10 ? " selected" : "") + ">10 Minuten</option>";
+    html += "</select></div>";
+    html += "<div class='row'><label>Design</label>";
+    html += "<select name='darkTheme'>";
+    html += "<option value='1'" + String(darkThemeEnabled  ? " selected" : "") + ">Dunkel</option>";
+    html += "<option value='0'" + String(!darkThemeEnabled ? " selected" : "") + ">Hell</option>";
     html += "</select></div></div>";
 
     // --- Nachtmodus ---
@@ -993,11 +1009,18 @@ void handleConfigSave() {
     dimTimeoutMin        = server.hasArg("dimTime")      ? server.arg("dimTime").toInt()      : 3;
     brightnessPercent    = server.hasArg("brightness")   ? server.arg("brightness").toInt()   : 80;
     brightnessPercent    = constrain(brightnessPercent, 10, 100);
+    bool newDarkTheme    = server.hasArg("darkTheme") ? (server.arg("darkTheme") == "1") : true;
 
     dimTimeoutMs = (dimTimeoutMin <= 0) ? 0 : (unsigned long)dimTimeoutMin * 60UL * 1000UL;
 
     // Helligkeit sofort anwenden (nur wenn nicht gedimmt)
     if (!isDimmed) ledcWrite(TFT_BL, getBrightPWM());
+
+    // Design sofort anwenden, falls geändert
+    if (newDarkTheme != darkThemeEnabled) {
+        darkThemeEnabled = newDarkTheme;
+        change_color_theme(darkThemeEnabled ? THEME_DARK : THEME_LIGHT);
+    }
 
     // In Flash speichern
     preferences.putBool("regenWarn",   regenWarnungEnabled);
@@ -1009,6 +1032,7 @@ void handleConfigSave() {
     preferences.putInt("pollenThresh", pollenSchwellwert);
     preferences.putInt("dimTime",      dimTimeoutMin);
     preferences.putInt("brightness",   brightnessPercent);
+    preferences.putBool("darkTheme",   darkThemeEnabled);
     nachtModusEnabled = server.hasArg("nachtModus");
     if (server.hasArg("nachtVon"))  nachtVon  = server.arg("nachtVon").toInt();
     if (server.hasArg("nachtBis"))  nachtBis  = server.arg("nachtBis").toInt();

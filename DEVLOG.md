@@ -14,7 +14,7 @@ des WetterCube-Projekts. Es dient als Referenz und Backup des Entwicklungsverlau
 | GUI-Framework | LVGL 8.3 |
 | Display-Treiber | Arduino_GFX_Library |
 | Wetter-API | Open-Meteo (kostenlos, kein API-Key) |
-| UI-Design | SquareLine Studio 1.6.1 |
+| UI-Design | [PicoPixel](https://picopixel.io) (bis v1.7.4: SquareLine Studio 1.6.1) |
 | Repo | https://github.com/JPPeterson-lab/wettercube |
 | Web-Installer | https://jppeterson-lab.github.io/wettercube/ |
 
@@ -327,3 +327,33 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - Alle Aufrufe außerhalb NTP-Init nutzen jetzt `getLocalTime(&ti, 0)` (sofortiger Rückgabe)
 
 *Zuletzt aktualisiert: Juli 2026*
+
+---
+
+## v1.8.0 – UI-Redesign mit PicoPixel
+
+### Wechsel von SquareLine Studio zu PicoPixel
+- Das komplette LVGL-UI wurde neu in [PicoPixel](https://picopixel.io) aufgebaut, einem browserbasierten LVGL-Editor (Penpot-basiert)
+- Alle 8 Screens (Hauptanzeige, Luftdruck/-feuchte, UV/Sonnenauf-/untergang, 3h-Vorhersage, Boot-Screen, Pollen, Regen-Warnung, Pollen-Warnung) wurden dort neu erstellt und exportiert
+- PicoPixels Export-Struktur unterscheidet sich grundlegend von SquareLine Studio:
+  - Statt einzelner globaler Zeiger pro Widget (`ui_LabelTemp`, `uic_LabelWindDir`) gibt es eine zentrale `objects_t`-Struktur (`objects.labeltemp`, `objects.labelwinddir`)
+  - Screens werden über `create_screen_screen1()` statt `ui_Screen1_screen_init()` erzeugt, geladen über `loadScreen(SCREEN_ID_...)` bzw. direkt per `lv_scr_load()` auf `objects.screenX`
+  - Icon-Variablen heißen jetzt `day_clear`, `rain` usw. statt `ui_img_day_clear_png`
+  - Alle betroffenen Referenzen in `wettercube.ino` wurden entsprechend umbenannt
+- Fonts werden von PicoPixel als eigene `.c`-Dateien pro Größe exportiert (dieses Mal 16/18/22/28/48 – Größe 20 entfiel, da nicht mehr verwendet)
+- Icon-Assets liegen in einem `images/`-Unterordner, der über `#include "images/xyz.c"` textuell in `images.c` eingebunden wird (Arduino kompiliert dieses Verzeichnis daher nicht separat)
+
+### Design-Umschaltung Hell/Dunkel
+- PicoPixel generiert ein `colors.c/h` mit `change_color_theme(THEME_DARK / THEME_LIGHT)`, das Hintergrund- und Textfarben der wichtigsten Widgets umschaltet
+- In der Web-UI unter „Display“ als Dropdown ergänzt, wird sofort angewendet und in den Preferences gespeichert (`darkTheme`-Key)
+
+### Icon-Feinabstimmung
+- Nebel: WMO 45 (normaler Nebel) → neues Icon `mist`, WMO 48 (Reifnebel) → weiterhin `fog`
+- Regen: WMO 51–57 (Niesel-/Sprühregen) → neues Icon `day_rain`, WMO 61–67 + 80–82 (Regen/Schauer) → weiterhin `rain`
+
+### Speicherproblem: 256×256px-Warnicon
+- Das Pollen-Warnicon (`alert`) wurde ursprünglich als 256×256px-Asset hochgeladen → 196 KB allein für dieses eine Bild im Flash
+- Nach Verkleinern auf 80×80px (passend zum bestehenden `rain_80x80`-Icon) sank der Speicherbedarf auf 19 KB
+- Sketch-Größe nach der kompletten Migration: ~1,79 MB von 2,03 MB verfügbarer Partition (vorher bei v1.7.4: ~2,0 MB, entsprechend knapperer Puffer)
+
+*Zuletzt aktualisiert: August 2026*

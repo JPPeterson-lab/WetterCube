@@ -4,6 +4,22 @@ Alle relevanten Änderungen je Version. Neueste Version zuerst.
 
 ---
 
+## [1.8.0] – 2026-08-14
+
+### Neu
+- **UI-Redesign** – Das komplette Interface wurde von SquareLine Studio auf [PicoPixel](https://picopixel.io) umgestellt, einen browserbasierten LVGL-Editor. Alle 8 Screens wurden dort neu aufgebaut und exportiert
+- **Design-Umschaltung (Hell/Dunkel)** – Neue Einstellung in der Web-UI unter „Display“, wird sofort angewendet (kein Neustart nötig) und dauerhaft gespeichert
+- **Icon-Feinabstimmung** – Nebel unterscheidet jetzt zwischen leichtem Nebel (`mist`, WMO 45) und Reifnebel (`fog`, WMO 48); Niesel-/Sprühregen (WMO 51–57) zeigt ein eigenes Icon (`day_rain`) statt des Regen-Icons für stärkeren Regen
+
+### Behoben
+- **Pollen-Warnicon Speicherverbrauch** – Das Warnsymbol lag als 256×256px-Bild vor (196 KB im Flash) und wurde auf 80×80px verkleinert (19 KB), passend zum bereits vorhandenen Regen-Warnicon
+
+### Technisch
+- Codebasis von SquareLine-generierten Dateien (`ui_*.c/h`) auf PicoPixels Export-Struktur (`screens.c/h`, `images.c/h`, `colors.c/h` u.a.) umgestellt
+- Alle Widget-Referenzen im Code von einzelnen globalen Zeigern (`ui_LabelTemp`) auf eine zentrale `objects`-Struktur (`objects.labeltemp`) umgestellt
+
+---
+
 ## [1.7.4] – 2026-07-22
 
 ### Neu
