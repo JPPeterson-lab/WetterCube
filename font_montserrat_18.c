@@ -1988,7 +1988,18 @@ static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
     0x30, 0x0, 0x0, 0x0, 0xe, 0xc0, 0x0, 0x0,
     0x0, 0x0, 0xe5, 0x0, 0x0, 0x0, 0x0, 0x5e,
     0x0, 0x0, 0x2, 0xa3, 0x4e, 0x60, 0x0, 0x0,
-    0x2b, 0xfe, 0x80, 0x0, 0x0, 0x0
+    0x2b, 0xfe, 0x80, 0x0, 0x0, 0x0,
+
+    /* U+03BC "μ" */
+    0x3f, 0x10, 0x0, 0x0, 0xd6, 0x3f, 0x10, 0x0,
+    0x0, 0xd6, 0x3f, 0x10, 0x0, 0x0, 0xd6, 0x3f,
+    0x10, 0x0, 0x0, 0xd6, 0x3f, 0x10, 0x0, 0x0,
+    0xd6, 0x3f, 0x10, 0x0, 0x0, 0xe6, 0x3f, 0x20,
+    0x0, 0x0, 0xf6, 0x3f, 0x80, 0x0, 0x7, 0xf6,
+    0x3f, 0xe8, 0x44, 0x9d, 0xd6, 0x3f, 0x3b, 0xff,
+    0xa1, 0xc6, 0x3f, 0x10, 0x0, 0x0, 0x0, 0x3f,
+    0x10, 0x0, 0x0, 0x0, 0x3f, 0x10, 0x0, 0x0,
+    0x0, 0x3f, 0x10, 0x0, 0x0, 0x0
 };
 
 
@@ -2187,7 +2198,8 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
     {.bitmap_index = 11783, .adv_w = 194, .box_w = 10, .box_h = 13, .ofs_x = 1, .ofs_y = 0},
     {.bitmap_index = 11848, .adv_w = 156, .box_w = 11, .box_h = 18, .ofs_x = -1, .ofs_y = -4},
     {.bitmap_index = 11947, .adv_w = 195, .box_w = 11, .box_h = 18, .ofs_x = 1, .ofs_y = -4},
-    {.bitmap_index = 12046, .adv_w = 156, .box_w = 11, .box_h = 17, .ofs_x = -1, .ofs_y = -4}
+    {.bitmap_index = 12046, .adv_w = 156, .box_w = 11, .box_h = 17, .ofs_x = -1, .ofs_y = -4},
+    {.bitmap_index = 12140, .adv_w = 195, .box_w = 10, .box_h = 14, .ofs_x = 1, .ofs_y = -4}
 };
 
 /*---------------------
@@ -2209,6 +2221,10 @@ static const lv_font_fmt_txt_cmap_t cmaps[] =
     },
     {
         .range_start = 174, .range_length = 82, .glyph_id_start = 109,
+        .unicode_list = NULL, .glyph_id_ofs_list = NULL, .list_length = 0, .type = LV_FONT_FMT_TXT_CMAP_FORMAT0_TINY
+    },
+    {
+        .range_start = 956, .range_length = 1, .glyph_id_start = 191,
         .unicode_list = NULL, .glyph_id_ofs_list = NULL, .list_length = 0, .type = LV_FONT_FMT_TXT_CMAP_FORMAT0_TINY
     }
 };
@@ -2234,7 +2250,7 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
     .cmaps = cmaps,
     .kern_dsc = NULL,
     .kern_scale = 0,
-    .cmap_num = 3,
+    .cmap_num = 4,
     .bpp = 4,
     .kern_classes = 0,
     .bitmap_format = 0,

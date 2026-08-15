@@ -87,6 +87,24 @@ void change_color_theme(uint32_t theme_index) {
     lv_obj_set_style_text_opa(objects.labelnameambrosia, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(objects.textareapollen, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(objects.textareapollen, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(objects.screenluft, lv_color_hex(theme_colors[theme_index][THEME_COLOR_BACKGROUND]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(objects.screenluft, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_BACKGROUND] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.labellufttitel, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.labellufttitel, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.labelnameozon, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.labelnameozon, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.labelnamepm10, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.labelnamepm10, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.labelnamepm25, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.labelnamepm25, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.labelnameaqi, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.labelnameaqi, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.unitozon, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.unitozon, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.unitpm10, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.unitpm10, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(objects.unitpm25, lv_color_hex(theme_colors[theme_index][THEME_COLOR_TEXT]), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(objects.unitpm25, (lv_opa_t)(theme_colors[theme_index][THEME_COLOR_TEXT] >> 24), LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 // Common colors

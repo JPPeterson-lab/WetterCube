@@ -15,7 +15,7 @@
 #include "images.h"
 #include "colors.h"
 
-#define FIRMWARE_VERSION     "1.8.0"
+#define FIRMWARE_VERSION     "1.8.1"
 #define OTA_VERSION_URL      "https://jppeterson-lab.github.io/WetterCube/version.json"
 #define OTA_FIRMWARE_URL     "https://jppeterson-lab.github.io/WetterCube/firmware/firmware.bin"
 
@@ -62,6 +62,7 @@ bool screen2Enabled       = true;
 bool screen3Enabled       = true;
 bool screen4Enabled       = true;
 bool screen5Enabled       = true;
+bool screenLuftEnabled    = true;
 int  pollenSchwellwert    = 30;
 int  dimTimeoutMin        = 3;
 int  brightnessPercent    = 80;   // 10–100%, konfigurierbar per Webinterface
@@ -281,22 +282,22 @@ void checkTouchButton() {
         }
         if (millis() - lastTouchTime > 500) {
             lastTouchTime = millis();
-            // Screenliste: 1 (immer aktiv), 4, 2, 3, 5
-            int  order[]   = {1, 4, 2, 3, 5};
-            bool enabled[] = {true, screen4Enabled, screen2Enabled, screen3Enabled, screen5Enabled};
+            // Screenliste: 1 (immer aktiv), 4, 2, 3, 5, 6
+            int  order[]   = {1, 4, 2, 3, 5, 6};
+            bool enabled[] = {true, screen4Enabled, screen2Enabled, screen3Enabled, screen5Enabled, screenLuftEnabled};
             // Aktuellen Index finden
             int curIdx = 0;
-            for (int i = 0; i < 5; i++) { if (order[i] == currentScreen) { curIdx = i; break; } }
+            for (int i = 0; i < 6; i++) { if (order[i] == currentScreen) { curIdx = i; break; } }
             // Nächsten aktiven Screen suchen
             int nextScreen = 1;
-            for (int i = 1; i <= 5; i++) {
-                int ni = (curIdx + i) % 5;
+            for (int i = 1; i <= 6; i++) {
+                int ni = (curIdx + i) % 6;
                 if (enabled[ni]) { nextScreen = order[ni]; break; }
             }
             // Screen laden
-            lv_obj_t* screens[] = {nullptr, objects.screen1, objects.screen2, objects.screen3, objects.screen4, objects.screenpollen};
+            lv_obj_t* screens[] = {nullptr, objects.screen1, objects.screen2, objects.screen3, objects.screen4, objects.screenpollen, objects.screenluft};
             lv_scr_load_anim_t animDir = (nextScreen == 1 && curIdx >= 1) ? LV_SCR_LOAD_ANIM_MOVE_RIGHT : LV_SCR_LOAD_ANIM_MOVE_LEFT;
-            if (nextScreen >= 1 && nextScreen <= 5) {
+            if (nextScreen >= 1 && nextScreen <= 6) {
                 lv_scr_load_anim(screens[nextScreen], animDir, 300, 0, false);
                 currentScreen = nextScreen;
             }
@@ -651,6 +652,19 @@ void setPollenLabel(lv_obj_t* label, float value) {
     lv_obj_set_style_text_color(label, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+// Grenzwerte aus dem European Air Quality Index (EEA, 2024er Revision),
+// Good+Fair -> gruen, Moderate -> gelb, Poor -> orange, (Very) Poor+ -> rot
+void setAirQualityLabel(lv_obj_t* label, float value, float thGreen, float thYellow, float thOrange) {
+    uint32_t color;
+    if (value <= thGreen)       color = 0x00CC44; // Gruen
+    else if (value <= thYellow) color = 0xFFCC00; // Gelb
+    else if (value <= thOrange) color = 0xFF8800; // Orange
+    else                        color = 0xFF3300; // Rot
+
+    lv_label_set_text(label, String((int)round(value)).c_str());
+    lv_obj_set_style_text_color(label, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
 void fetchPollen() {
     if (WiFi.status() != WL_CONNECTED) return;
     if (latitude == 0.0 && longitude == 0.0) return;
@@ -661,7 +675,7 @@ void fetchPollen() {
     String url = "https://air-quality-api.open-meteo.com/v1/air-quality";
     url += "?latitude="  + String(latitude, 4);
     url += "&longitude=" + String(longitude, 4);
-    url += "&hourly=birch_pollen,grass_pollen,alder_pollen,mugwort_pollen,ragweed_pollen";
+    url += "&hourly=birch_pollen,grass_pollen,alder_pollen,mugwort_pollen,ragweed_pollen,pm10,pm2_5,ozone,european_aqi";
     url += "&timezone=auto&forecast_days=1";
 
     Serial.print("Pollen-URL: "); Serial.println(url);
@@ -670,7 +684,7 @@ void fetchPollen() {
 
     if (httpCode == 200) {
         String payload = http.getString();
-        DynamicJsonDocument doc(4096);
+        DynamicJsonDocument doc(8192);
         deserializeJson(doc, payload);
 
         struct tm timeinfo;
@@ -691,6 +705,19 @@ void fetchPollen() {
 
         Serial.printf("Pollen OK: Birke %.1f, Graeser %.1f, Erle %.1f, Beifuss %.1f, Ambrosia %.1f\n",
                       birke, graeser, erle, beifuss, ambrosia);
+
+        // --- Screen 6: Luftqualität (Ozon, PM10, PM2.5, EU-AQI) ---
+        float ozon = doc["hourly"]["ozone"][h].as<float>();
+        float pm10 = doc["hourly"]["pm10"][h].as<float>();
+        float pm25 = doc["hourly"]["pm2_5"][h].as<float>();
+        float aqi  = doc["hourly"]["european_aqi"][h].as<float>();
+
+        setAirQualityLabel(objects.labelozonwert, ozon, 100, 120, 160);
+        setAirQualityLabel(objects.labelpm10wert, pm10,  45, 120, 195);
+        setAirQualityLabel(objects.labelpm25wert, pm25,  15,  50,  90);
+        setAirQualityLabel(objects.labelaqiwert,  aqi,   40,  60,  80);
+
+        Serial.printf("Luftqualitaet OK: Ozon %.1f, PM10 %.1f, PM2.5 %.1f, AQI %.1f\n", ozon, pm10, pm25, aqi);
 
         // --- Pollen-Warnung prüfen (Schwellwert konfigurierbar) ---
         struct { const char* name; float wert; } pollenListe[] = {
@@ -805,6 +832,7 @@ void loadConfig() {
     screen3Enabled       = preferences.getBool("scr3",        true);
     screen4Enabled       = preferences.getBool("scr4",        true);
     screen5Enabled       = preferences.getBool("scr5",        true);
+    screenLuftEnabled    = preferences.getBool("scrLuft",     true);
     pollenSchwellwert    = preferences.getInt("pollenThresh", 30);
     dimTimeoutMin        = preferences.getInt("dimTime",      3);
     brightnessPercent    = preferences.getInt("brightness",   80);
@@ -892,7 +920,9 @@ void handleConfig() {
     html += "<div class='row'><label>Screen 3 – UV / Sonnenauf- &amp; untergang</label>";
     html += "<input type='checkbox' name='scr3' value='1'" + String(screen3Enabled ? chk : "") + "></div>";
     html += "<div class='row'><label>Screen 5 – Pollen</label>";
-    html += "<input type='checkbox' name='scr5' value='1'" + String(screen5Enabled ? chk : "") + "></div></div>";
+    html += "<input type='checkbox' name='scr5' value='1'" + String(screen5Enabled ? chk : "") + "></div>";
+    html += "<div class='row'><label>Screen 6 – Luftqualität</label>";
+    html += "<input type='checkbox' name='scrLuft' value='1'" + String(screenLuftEnabled ? chk : "") + "></div></div>";
 
     // --- Display ---
     html += "<div class='card'><h2>&#128261; Display</h2>";
@@ -1005,6 +1035,7 @@ void handleConfigSave() {
     screen3Enabled       = server.hasArg("scr3")       && server.arg("scr3")       == "1";
     screen4Enabled       = server.hasArg("scr4")       && server.arg("scr4")       == "1";
     screen5Enabled       = server.hasArg("scr5")       && server.arg("scr5")       == "1";
+    screenLuftEnabled    = server.hasArg("scrLuft")    && server.arg("scrLuft")    == "1";
     pollenSchwellwert    = server.hasArg("pollenThresh") ? server.arg("pollenThresh").toInt() : 30;
     dimTimeoutMin        = server.hasArg("dimTime")      ? server.arg("dimTime").toInt()      : 3;
     brightnessPercent    = server.hasArg("brightness")   ? server.arg("brightness").toInt()   : 80;
@@ -1029,6 +1060,7 @@ void handleConfigSave() {
     preferences.putBool("scr3",        screen3Enabled);
     preferences.putBool("scr4",        screen4Enabled);
     preferences.putBool("scr5",        screen5Enabled);
+    preferences.putBool("scrLuft",     screenLuftEnabled);
     preferences.putInt("pollenThresh", pollenSchwellwert);
     preferences.putInt("dimTime",      dimTimeoutMin);
     preferences.putInt("brightness",   brightnessPercent);

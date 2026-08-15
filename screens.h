@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 typedef struct _objects_t {
+    lv_obj_t *screenluft;
     lv_obj_t *screenlager;
     lv_obj_t *uiscreenwarnungpollen;
     lv_obj_t *uiscreenwarnung;
@@ -85,22 +86,38 @@ typedef struct _objects_t {
     lv_obj_t *img_rain_80x80;
     lv_obj_t *img_snow;
     lv_obj_t *img_thunder;
+    lv_obj_t *labellufttitel;
+    lv_obj_t *labelnameozon;
+    lv_obj_t *labelnamepm10;
+    lv_obj_t *labelnamepm25;
+    lv_obj_t *labelozonwert;
+    lv_obj_t *labelpm10wert;
+    lv_obj_t *labelpm25wert;
+    lv_obj_t *labelnameaqi;
+    lv_obj_t *labelaqiwert;
+    lv_obj_t *unitozon;
+    lv_obj_t *unitpm10;
+    lv_obj_t *unitpm25;
 } objects_t;
 
 extern objects_t objects;
 
 enum ScreensEnum {
-    SCREEN_ID_SCREENLAGER = 1,
-    SCREEN_ID_UISCREENWARNUNGPOLLEN = 2,
-    SCREEN_ID_UISCREENWARNUNG = 3,
-    SCREEN_ID_SCREENPOLLEN = 4,
-    SCREEN_ID_SCREENBOOT = 5,
-    SCREEN_ID_SCREEN4 = 6,
-    SCREEN_ID_SCREEN3 = 7,
-    SCREEN_ID_SCREEN2 = 8,
-    SCREEN_ID_SCREEN1 = 9,
+    SCREEN_ID_SCREENLUFT = 1,
+    SCREEN_ID_SCREENLAGER = 2,
+    SCREEN_ID_UISCREENWARNUNGPOLLEN = 3,
+    SCREEN_ID_UISCREENWARNUNG = 4,
+    SCREEN_ID_SCREENPOLLEN = 5,
+    SCREEN_ID_SCREENBOOT = 6,
+    SCREEN_ID_SCREEN4 = 7,
+    SCREEN_ID_SCREEN3 = 8,
+    SCREEN_ID_SCREEN2 = 9,
+    SCREEN_ID_SCREEN1 = 10,
 };
 
+void create_screen_screenluft();
+void tick_screen_screenluft();
+void delete_screen_screenluft();
 void create_screen_screenlager();
 void tick_screen_screenlager();
 void delete_screen_screenlager();

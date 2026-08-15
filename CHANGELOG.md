@@ -4,6 +4,15 @@ Alle relevanten Änderungen je Version. Neueste Version zuerst.
 
 ---
 
+## [1.8.1] – 2026-08-15
+
+### Neu
+- **Screen 6: Luftqualität** – Neuer Screen zeigt Ozon, PM10, PM2.5 und den europäischen Luftqualitätsindex (EU-AQI), farblich codiert (grün/gelb/orange/rot) nach den offiziellen EEA-Grenzwerten (2024er Revision)
+- Werte werden über denselben Air-Quality-API-Aufruf wie die Pollendaten abgerufen (kein zusätzlicher HTTP-Request)
+- Screen ist wie die anderen über die Web-UI einzeln an-/abschaltbar
+
+---
+
 ## [1.8.0] – 2026-08-14
 
 ### Neu

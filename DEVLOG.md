@@ -356,4 +356,29 @@ Berechnung: `(deg + 22.5) / 45.0) % 8`
 - Nach Verkleinern auf 80×80px (passend zum bestehenden `rain_80x80`-Icon) sank der Speicherbedarf auf 19 KB
 - Sketch-Größe nach der kompletten Migration: ~1,79 MB von 2,03 MB verfügbarer Partition (vorher bei v1.7.4: ~2,0 MB, entsprechend knapperer Puffer)
 
+---
+
+## v1.8.1 – Screen 6: Luftqualität
+
+### Neuer Screen
+- In PicoPixel im gleichen Layout-Raster wie ScreenPollen aufgebaut (Titel oben, Zeilen mit 35px Abstand, linksbündige Namen, zentrierte Werte)
+- Zeigt vier Werte: Ozon, PM10, PM2.5 und den europäischen Luftqualitätsindex (`european_aqi`)
+- Alle vier über denselben Air-Quality-API-Call wie die Pollendaten abgerufen (`&hourly=...,pm10,pm2_5,ozone,european_aqi`), kein zusätzlicher HTTP-Request nötig
+
+### Farbcodierung nach EEA-Grenzwerten
+Die offiziellen EU-Luftqualitätsindex-Grenzwerte (EEA, 2024er Revision) haben 6 Kategorien
+(Good/Fair/Moderate/Poor/Very Poor/Extremely Poor), die für die 4-Farben-Darstellung
+(grün/gelb/orange/rot) zusammengefasst wurden:
+
+| Schadstoff | Grün ≤ | Gelb ≤ | Orange ≤ | Rot > |
+|---|---|---|---|---|
+| PM2.5 (µg/m³) | 15 | 50 | 90 | 90 |
+| PM10 (µg/m³) | 45 | 120 | 195 | 195 |
+| Ozon (µg/m³) | 100 | 120 | 160 | 160 |
+| EU-AQI | 40 | 60 | 80 | 80 |
+
+### Web-UI
+- Neue Checkbox „Screen 6 – Luftqualität" unter „Screens aktivieren", gleiches Muster wie die bestehenden Screen-Toggles (Preference-Key `scrLuft`)
+- Navigationsreihenfolge erweitert: 1 → 4 → 2 → 3 → 5 → 6
+
 *Zuletzt aktualisiert: August 2026*
