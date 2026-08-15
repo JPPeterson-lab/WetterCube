@@ -3,7 +3,7 @@
 Eine kompakte WLAN-Wetterstation auf Basis des **ESP32-C3 Super Mini**, die aktuelle
 Wetterdaten auf einem 1,54"-Farbdisplay (ST7789, 240×240 px) anzeigt.
 Dies ist mein erstes eigenes Hardware-Projekt von Grund auf selbst gebaut und mit KI Hilfe programmiert.
-Das Projekt ist aktuell nur in Deutscher Sprache verfügbar, eine Portierung in Englisch ist geplant für Q3/26.
+Das Projekt ist aktuell nur in Deutscher Sprache verfügbar, eine Portierung in Englisch ist geplant für Q1/27.
 
 Die Wetterdaten kommen kostenlos von [Open-Meteo](https://open-meteo.com) –
 kein API-Key nötig.
@@ -210,7 +210,7 @@ A compact Wi-Fi weather station based on the **ESP32-C3 Super Mini**, displaying
 
 This is my first self-built hardware project, designed from scratch and programmed with the help of AI.
 
-The project is currently available in German only. An English version is planned for Q3 2026.
+The project is currently available in German only. An English version is planned for Q1 2027.
 
 Weather data is provided free of charge by [Open-Meteo](https://open-meteo.com) – no API key required.
 
